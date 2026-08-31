@@ -1,3 +1,4 @@
+import QMindMark from "@/components/brand/QMindMark";
 import CreateMapButton from "@/components/dashboard/CreateMapButton";
 import MapCard from "@/components/dashboard/MapCard";
 import { listMaps } from "@/lib/maps";
@@ -19,7 +20,10 @@ export default async function HomePage() {
       <header className="home-header">
         <div>
           <p className="eyebrow">workspace</p>
-          <h1>QMind</h1>
+          <div className="brand-lockup">
+            <QMindMark size={52} />
+            <h1>QMind</h1>
+          </div>
           <p className="lede">把想法铺开。拖一条线，长出下一层。</p>
         </div>
         <CreateMapButton />

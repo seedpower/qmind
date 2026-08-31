@@ -12,6 +12,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import QMindMark from "@/components/brand/QMindMark";
 import { COLOR_ORDER, NODE_COLORS } from "@/lib/types";
 import { useMindMapStore } from "@/store/useMindMapStore";
 
@@ -37,6 +38,7 @@ export default function EditorToolbar({ onHelp }: Props) {
     <header className="editor-toolbar">
       <div className="toolbar-left">
         <Link href="/" className="back-link">
+          <QMindMark size={26} />
           QMind
         </Link>
         <span className="toolbar-rule" />

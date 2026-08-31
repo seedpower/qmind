@@ -9,6 +9,7 @@
   --paper-dim: rgba(244, 239, 230, 0.62);
   --paper-faint: rgba(244, 239, 230, 0.12);
   --gold: #e8a838;
+  --brand-green: #2fafa3;
   --gold-soft: rgba(232, 168, 56, 0.18);
   --rose: #e85d6c;
   --line: rgba(244, 239, 230, 0.1);
@@ -63,6 +64,17 @@ a {
   text-transform: uppercase;
   font-size: 11px;
   color: var(--gold);
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-lockup svg {
+  flex-shrink: 0;
+  color: var(--brand-green);
 }
 
 .home h1 {
@@ -317,9 +329,17 @@ a {
 }
 
 .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-title);
   font-size: 22px;
   letter-spacing: -0.04em;
+}
+
+.back-link svg {
+  flex-shrink: 0;
+  color: var(--brand-green);
 }
 
 .toolbar-rule {
@@ -701,6 +721,11 @@ a {
 
   .home h1 {
     font-size: 44px;
+  }
+
+  .brand-lockup svg {
+    width: 40px;
+    height: 40px;
   }
 
   .home-header,
