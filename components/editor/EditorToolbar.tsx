@@ -65,7 +65,7 @@ export default function EditorToolbar({ onHelp }: Props) {
           type="button"
           className="tool-btn danger"
           disabled={!canDelete}
-          onClick={deleteSelection}
+          onClick={() => deleteSelection()}
         >
           <Trash2 size={15} />
           删除

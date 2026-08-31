@@ -32,6 +32,10 @@ export default function HelpOverlay({
             <span>加减选中节点</span>
           </li>
           <li>
+            <kbd>右键节点</kbd>
+            <span>新建、删除、改颜色</span>
+          </li>
+          <li>
             <kbd>双击节点</kbd>
             <span>编辑文字</span>
           </li>

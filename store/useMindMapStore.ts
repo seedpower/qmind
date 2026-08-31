@@ -58,7 +58,7 @@ type MindMapState = {
   updateNodeColor: (id: string, color: NodeColor) => void;
   startEditing: (id: string) => void;
   finishEditing: (id: string) => void;
-  deleteSelection: () => void;
+  deleteSelection: (nodeId?: string) => void;
   layouting: boolean;
   layoutTick: number;
   layoutMode: LayoutMode;
@@ -343,9 +343,11 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     });
   },
 
-  deleteSelection: () => {
+  deleteSelection: (nodeId) => {
     const { nodes, edges } = graphNow();
-    const selected = nodes.filter((node) => node.selected && !node.data.isRoot);
+    const selected = nodeId
+      ? nodes.filter((node) => node.id === nodeId && !node.data.isRoot)
+      : nodes.filter((node) => node.selected && !node.data.isRoot);
     if (selected.length === 0) return;
     const removeIds = new Set<string>();
     for (const node of selected) {

@@ -13,12 +13,13 @@ import {
   type Connection,
   type OnConnectEnd,
 } from "@xyflow/react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { FLOW_NODE_ORIGIN, NODE_COLORS } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 import MindMapEdge from "./MindMapEdge";
 import MindMapNode from "./MindMapNode";
+import NodeContextMenu from "./NodeContextMenu";
 
 const nodeTypes = { mindmap: MindMapNode };
 const edgeTypes = { mindmap: MindMapEdge };
@@ -28,6 +29,9 @@ const NODE_POINTER_SLOP = 8;
 function FlowCanvas() {
   const connectingNodeId = useRef<string | null>(null);
   const [spacePan, setSpacePan] = useState(false);
+  const [menu, setMenu] = useState<{ nodeId: string; x: number; y: number } | null>(
+    null,
+  );
   const { screenToFlowPosition, fitView } = useReactFlow();
   const {
     nodes,
@@ -109,7 +113,7 @@ function FlowCanvas() {
       const parentId = connectingNodeId.current;
       connectingNodeId.current = null;
       if (connectionState.isValid || !parentId) return;
-      if (!connectionState.to || !connectionState.from) return;
+      if (!connectionState.from || !connectionState.to) return;
 
       const dragged = Math.hypot(
         connectionState.to.x - connectionState.from.x,
@@ -118,7 +122,7 @@ function FlowCanvas() {
       if (dragged < 24) return;
 
       const point =
-        "changedTouches" in event ? event.changedTouches[0] : (event as MouseEvent);
+        "changedTouches" in event ? event.changedTouches[0] : event;
       const position = screenToFlowPosition({
         x: point.clientX,
         y: point.clientY,
@@ -128,70 +132,103 @@ function FlowCanvas() {
     [addChildNode, screenToFlowPosition],
   );
 
+  const closeMenu = useCallback(() => setMenu(null), []);
+
+  const handleNodeContextMenu = useCallback(
+    (event: ReactMouseEvent, node: FlowNode) => {
+      event.preventDefault();
+      useMindMapStore.setState((state) => ({
+        nodes: state.nodes.map((item) => ({
+          ...item,
+          selected: item.id === node.id,
+        })),
+      }));
+      setMenu({ nodeId: node.id, x: event.clientX, y: event.clientY });
+    },
+    [],
+  );
+
   return (
-    <ReactFlow
-      className={spacePan ? "is-space-pan" : undefined}
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      onConnect={handleConnect}
-      onConnectStart={handleConnectStart}
-      onConnectEnd={handleConnectEnd}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      nodeOrigin={FLOW_NODE_ORIGIN}
-      colorMode="dark"
-      connectionLineType={ConnectionLineType.Bezier}
-      connectionLineStyle={{ stroke: "#e8a838", strokeWidth: 2 }}
-      defaultEdgeOptions={{ type: "mindmap" }}
-      fitView
-      fitViewOptions={{ padding: 0.28 }}
-      onMoveEnd={(_, nextViewport) => {
-        useMindMapStore.getState().setViewport(nextViewport);
-      }}
-      minZoom={0.2}
-      maxZoom={2}
-      deleteKeyCode={null}
-      selectionOnDrag
-      selectionMode={SelectionMode.Partial}
-      selectionKeyCode={null}
-      multiSelectionKeyCode="Shift"
-      selectNodesOnDrag
-      nodeClickDistance={NODE_POINTER_SLOP}
-      nodeDragThreshold={NODE_POINTER_SLOP}
-      connectionDragThreshold={NODE_POINTER_SLOP}
-      panOnDrag={false}
-      panActivationKeyCode="Space"
-      panOnScroll
-      nodesFocusable={false}
-      edgesFocusable={false}
-      proOptions={{ hideAttribution: false }}
-    >
-      <Background
-        id="dots"
-        variant={BackgroundVariant.Dots}
-        gap={22}
-        size={1.4}
-        color="rgba(246, 241, 232, 0.08)"
-      />
-      <Controls
-        showInteractive={false}
-        position="bottom-left"
-        className="mindmap-controls"
-      />
-      <MiniMap
-        position="bottom-right"
-        pannable
-        zoomable
-        nodeColor={(node) => {
-          const color = (node as FlowNode).data?.color ?? "stone";
-          return NODE_COLORS[color].border;
+    <div className="canvas-host">
+      <ReactFlow
+        className={spacePan ? "is-space-pan" : undefined}
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={handleConnect}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        nodeOrigin={FLOW_NODE_ORIGIN}
+        colorMode="dark"
+        connectionLineType={ConnectionLineType.Bezier}
+        connectionLineStyle={{ stroke: "#e8a838", strokeWidth: 2 }}
+        defaultEdgeOptions={{ type: "mindmap" }}
+        fitView
+        fitViewOptions={{ padding: 0.28 }}
+        onMoveEnd={(_, nextViewport) => {
+          useMindMapStore.getState().setViewport(nextViewport);
         }}
-        maskColor="rgba(12, 14, 18, 0.7)"
-        className="mindmap-minimap"
-      />
-    </ReactFlow>
+        onNodeContextMenu={handleNodeContextMenu}
+        onPaneContextMenu={(event) => {
+          event.preventDefault();
+          closeMenu();
+        }}
+        onPaneClick={closeMenu}
+        onMoveStart={closeMenu}
+        minZoom={0.2}
+        maxZoom={2}
+        deleteKeyCode={null}
+        selectionOnDrag
+        selectionMode={SelectionMode.Partial}
+        selectionKeyCode={null}
+        multiSelectionKeyCode="Shift"
+        selectNodesOnDrag
+        nodeClickDistance={NODE_POINTER_SLOP}
+        nodeDragThreshold={NODE_POINTER_SLOP}
+        connectionDragThreshold={NODE_POINTER_SLOP}
+        panOnDrag={false}
+        panActivationKeyCode="Space"
+        panOnScroll
+        nodesFocusable={false}
+        edgesFocusable={false}
+        proOptions={{ hideAttribution: false }}
+      >
+        <Background
+          id="dots"
+          variant={BackgroundVariant.Dots}
+          gap={22}
+          size={1.4}
+          color="rgba(246, 241, 232, 0.08)"
+        />
+        <Controls
+          showInteractive={false}
+          position="bottom-left"
+          className="mindmap-controls"
+        />
+        <MiniMap
+          position="bottom-right"
+          pannable
+          zoomable
+          nodeColor={(node) => {
+            const color = (node as FlowNode).data?.color ?? "stone";
+            return NODE_COLORS[color].border;
+          }}
+          maskColor="rgba(12, 14, 18, 0.7)"
+          className="mindmap-minimap"
+        />
+      </ReactFlow>
+      {menu ? (
+        <NodeContextMenu
+          nodeId={menu.nodeId}
+          x={menu.x}
+          y={menu.y}
+          onClose={closeMenu}
+        />
+      ) : null}
+    </div>
   );
 }
 
