@@ -109,6 +109,7 @@ function FlowCanvas() {
       const parentId = connectingNodeId.current;
       connectingNodeId.current = null;
       if (connectionState.isValid || !parentId) return;
+      if (!connectionState.to || !connectionState.from) return;
 
       const dragged = Math.hypot(
         connectionState.to.x - connectionState.from.x,
