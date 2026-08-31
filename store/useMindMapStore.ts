@@ -10,6 +10,7 @@ import {
   type Node,
   type NodeChange,
   type NodePositionChange,
+  type NodeSelectionChange,
   type Viewport,
 } from "@xyflow/react";
 import { nanoid } from "nanoid";
@@ -19,7 +20,9 @@ import {
   getDescendantIds,
   getParentId,
   pickFocusAfterDelete,
+  pickNodeInDirection,
   wouldCreateCycle,
+  type NavDirection,
 } from "@/lib/graph";
 import {
   COLOR_ORDER,
@@ -44,11 +47,16 @@ type MindMapState = {
   viewport: Viewport;
   saveStatus: SaveStatus;
   hydrated: boolean;
+  lastSelectedId: string | null;
+  selectionNavTick: number;
   hydrate: (map: MindMapDocument) => void;
   setTitle: (title: string) => void;
   setViewport: (viewport: Viewport) => void;
   markDirty: () => void;
   setSaveStatus: (status: SaveStatus) => void;
+  setLastSelectedId: (id: string | null) => void;
+  focusNearestSelected: (point: { x: number; y: number }) => void;
+  selectAdjacent: (direction: NavDirection) => void;
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
@@ -93,6 +101,28 @@ function toFlowEdges(edges: PersistedEdge[]): FlowEdge[] {
 function nextColor(parentColor: NodeColor): NodeColor {
   const index = COLOR_ORDER.indexOf(parentColor);
   return COLOR_ORDER[(index + 1) % COLOR_ORDER.length];
+}
+
+export function getFocusedNode(state: Pick<MindMapState, "nodes" | "lastSelectedId">): FlowNode | undefined {
+  const { nodes, lastSelectedId } = state;
+  return (
+    nodes.find((node) => node.id === lastSelectedId && node.selected) ??
+    nodes.find((node) => node.selected) ??
+    nodes.find((node) => node.data.isRoot)
+  );
+}
+
+function resolveLastSelectedId(
+  nodes: FlowNode[],
+  current: string | null,
+  changes: NodeChange<FlowNode>[],
+): string | null {
+  const selectedIds = nodes.filter((node) => node.selected).map((node) => node.id);
+  if (current && selectedIds.includes(current)) return current;
+  const gained = changes
+    .filter((change): change is NodeSelectionChange => change.type === "select" && change.selected)
+    .map((change) => change.id);
+  return gained.at(-1) ?? selectedIds.at(-1) ?? current;
 }
 
 export const useMindMapStore = create<MindMapState>((set, get) => {
@@ -161,19 +191,27 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   viewport: { x: 0, y: 0, zoom: 1 },
   saveStatus: "idle",
   hydrated: false,
+  lastSelectedId: null,
+  selectionNavTick: 0,
   layouting: false,
   layoutTick: 0,
   layoutMode: "RIGHT",
 
   hydrate: (map) => {
+    const nodes = toFlowNodes(map.nodes);
     set({
       mapId: map.id,
       title: map.title,
-      nodes: toFlowNodes(map.nodes),
+      nodes,
       edges: toFlowEdges(map.edges),
       viewport: map.viewport,
       saveStatus: "saved",
       hydrated: true,
+      lastSelectedId:
+        nodes.find((node) => node.selected)?.id ??
+        nodes.find((node) => node.data.isRoot)?.id ??
+        nodes[0]?.id ??
+        null,
     });
   },
 
@@ -186,6 +224,51 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   setSaveStatus: (saveStatus) => set({ saveStatus }),
+
+  setLastSelectedId: (lastSelectedId) => set({ lastSelectedId }),
+
+  focusNearestSelected: (point) => {
+    const selected = get().nodes.filter((node) => node.selected);
+    if (selected.length === 0) return;
+    let best = selected[0];
+    let bestDist = Number.POSITIVE_INFINITY;
+    for (const node of selected) {
+      const dist =
+        (node.position.x - point.x) ** 2 + (node.position.y - point.y) ** 2;
+      if (dist < bestDist) {
+        best = node;
+        bestDist = dist;
+      }
+    }
+    set({ lastSelectedId: best.id });
+  },
+
+  selectAdjacent: (direction) => {
+    const state = get();
+    const current = getFocusedNode(state);
+    if (!current) return;
+    const alreadyOnCurrent =
+      current.selected && state.lastSelectedId === current.id;
+    const next = alreadyOnCurrent
+      ? pickNodeInDirection(
+          current,
+          state.nodes,
+          state.edges,
+          direction,
+          state.layoutMode,
+        )
+      : current;
+    if (!next) return;
+    set({
+      lastSelectedId: next.id,
+      selectionNavTick: state.selectionNavTick + 1,
+      nodes: state.nodes.map((node) => ({
+        ...node,
+        selected: node.id === next.id,
+        data: { ...node.data, editing: false },
+      })),
+    });
+  },
 
   onNodesChange: (changes) => {
     const { nodes, edges, hydrated } = get();
@@ -224,8 +307,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       (change) => change.type === "position" && change.dragging === false,
     );
     const removed = changes.some((change) => change.type === "remove");
+    const lastSelectedId = resolveLastSelectedId(
+      nextNodes,
+      get().lastSelectedId,
+      changes,
+    );
     set({
       nodes: nextNodes,
+      lastSelectedId,
       saveStatus: hydrated && (dragEnded || removed) ? "dirty" : get().saveStatus,
     });
   },
@@ -288,6 +377,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         },
       ],
     );
+    set({ lastSelectedId: id });
     return id;
   },
 
@@ -321,6 +411,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
 
   startEditing: (id) => {
     set({
+      lastSelectedId: id,
       nodes: get().nodes.map((node) => ({
         ...node,
         selected: node.id === id,
@@ -375,6 +466,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         (edge) => !removeIds.has(edge.source) && !removeIds.has(edge.target),
       ),
     );
+    set({ lastSelectedId: nextSelectedId });
   },
 
   autoLayout: async (mode, options) => {

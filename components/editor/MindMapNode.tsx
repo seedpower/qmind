@@ -2,7 +2,7 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useEffect, useRef } from "react";
-import { NODE_COLORS } from "@/lib/types";
+import { getNodePalette } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 
 export default function MindMapNode({
@@ -15,7 +15,8 @@ export default function MindMapNode({
   const startEditing = useMindMapStore((s) => s.startEditing);
   const finishEditing = useMindMapStore((s) => s.finishEditing);
   const addChildNode = useMindMapStore((s) => s.addChildNode);
-  const palette = NODE_COLORS[data.color];
+  const focused = useMindMapStore((s) => s.lastSelectedId === id);
+  const { bg, border, text } = getNodePalette(data.color);
 
   useEffect(() => {
     if (!data.editing) return;
@@ -25,16 +26,16 @@ export default function MindMapNode({
 
   return (
     <div
-      className={`mindmap-node ${data.isRoot ? "is-root" : ""} ${selected ? "is-selected" : ""}`}
+      className={`mindmap-node ${data.isRoot ? "is-root" : ""} ${selected ? "is-selected" : ""} ${selected && focused ? "is-focused" : ""}`}
       style={
         {
-          "--node-bg": palette.bg,
-          "--node-border": palette.border,
-          "--node-text": palette.text,
+          "--node-bg": bg,
+          "--node-border": border,
+          "--node-text": text,
         } as React.CSSProperties
       }
       onPointerDown={(event) => {
-        if (event.button !== 0 || event.shiftKey) return;
+        if (event.button !== 0) return;
         if (
           event.target instanceof HTMLElement &&
           event.target.closest("button, input, .react-flow__handle")
@@ -43,8 +44,14 @@ export default function MindMapNode({
         }
         useMindMapStore.setState((state) => {
           const current = state.nodes.find((node) => node.id === id);
-          if (!current || current.selected) return state;
+          if (event.shiftKey) {
+            return { lastSelectedId: id };
+          }
+          if (!current || current.selected) {
+            return current?.selected ? { lastSelectedId: id } : state;
+          }
           return {
+            lastSelectedId: id,
             nodes: state.nodes.map((node) => ({
               ...node,
               selected: node.id === id,

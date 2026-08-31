@@ -44,6 +44,10 @@ export default function HelpOverlay({
             <span>从节点拉出子节点</span>
           </li>
           <li>
+            <kbd>↑ ↓ ← →</kbd>
+            <span>沿父子 / 同级切换选中节点</span>
+          </li>
+          <li>
             <kbd>Tab</kbd>
             <span>添加子节点，随后自动排版</span>
           </li>

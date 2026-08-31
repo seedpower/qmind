@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import QMindMark from "@/components/brand/QMindMark";
 import { COLOR_ORDER, NODE_COLORS } from "@/lib/types";
-import { useMindMapStore } from "@/store/useMindMapStore";
+import { getFocusedNode, useMindMapStore } from "@/store/useMindMapStore";
 
 type Props = {
   onHelp: () => void;
@@ -31,7 +31,7 @@ export default function EditorToolbar({ onHelp }: Props) {
   const layouting = useMindMapStore((s) => s.layouting);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
 
-  const selected = nodes.find((node) => node.selected) ?? nodes.find((n) => n.data.isRoot);
+  const selected = useMindMapStore(getFocusedNode);
   const canDelete = Boolean(selected && !selected.data.isRoot);
 
   return (

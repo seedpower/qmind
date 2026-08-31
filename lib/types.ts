@@ -10,6 +10,10 @@ export const NODE_COLORS = {
 
 export type NodeColor = keyof typeof NODE_COLORS;
 
+export function getNodePalette(color: string | undefined) {
+  return NODE_COLORS[color as NodeColor] ?? NODE_COLORS.stone;
+}
+
 export const COLOR_ORDER = Object.keys(NODE_COLORS) as NodeColor[];
 
 export type MindMapNodeData = {

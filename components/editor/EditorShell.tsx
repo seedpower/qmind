@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useMindMapStore } from "@/store/useMindMapStore";
+import { getFocusedNode, useMindMapStore } from "@/store/useMindMapStore";
 import type { MindMapDocument, PersistedEdge, PersistedNode } from "@/lib/types";
 import EditorToolbar from "./EditorToolbar";
 import HelpOverlay from "./HelpOverlay";
@@ -103,21 +103,29 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
       }
 
       if (helpOpen && event.key === "Escape") {
+        event.preventDefault();
         setHelpOpen(false);
         return;
       }
 
-      if (typing) return;
+      if (typing || helpOpen) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
 
       const state = useMindMapStore.getState();
-      const selected =
-        state.nodes.find((node) => node.selected) ??
-        state.nodes.find((node) => node.data.isRoot);
+      const selected = getFocusedNode(state);
       if (!selected) return;
 
       if (event.key === "Tab") {
         event.preventDefault();
         state.addChildNode(selected.id);
+      } else if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown" ||
+        event.key === "ArrowLeft" ||
+        event.key === "ArrowRight"
+      ) {
+        event.preventDefault();
+        state.selectAdjacent(event.key);
       } else if (event.key === "Enter") {
         event.preventDefault();
         state.addSiblingNode(selected.id);

@@ -15,8 +15,8 @@ import {
 } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
-import { FLOW_NODE_ORIGIN, NODE_COLORS } from "@/lib/types";
-import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
+import { FLOW_NODE_ORIGIN, getNodePalette } from "@/lib/types";
+import { getFocusedNode, useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 import MindMapEdge from "./MindMapEdge";
 import MindMapNode from "./MindMapNode";
 import NodeContextMenu from "./NodeContextMenu";
@@ -32,7 +32,7 @@ function FlowCanvas() {
   const [menu, setMenu] = useState<{ nodeId: string; x: number; y: number } | null>(
     null,
   );
-  const { screenToFlowPosition, fitView } = useReactFlow();
+  const { screenToFlowPosition, fitView, getViewport, setCenter } = useReactFlow();
   const {
     nodes,
     edges,
@@ -41,6 +41,7 @@ function FlowCanvas() {
     onConnect,
     addChildNode,
     layoutTick,
+    selectionNavTick,
   } = useMindMapStore(
     useShallow((s) => ({
       nodes: s.nodes,
@@ -50,6 +51,7 @@ function FlowCanvas() {
       onConnect: s.onConnect,
       addChildNode: s.addChildNode,
       layoutTick: s.layoutTick,
+      selectionNavTick: s.selectionNavTick,
     })),
   );
 
@@ -60,6 +62,29 @@ function FlowCanvas() {
     });
     return () => cancelAnimationFrame(frame);
   }, [layoutTick, fitView]);
+
+  useEffect(() => {
+    if (selectionNavTick === 0) return;
+    setMenu(null);
+    const focused = getFocusedNode(useMindMapStore.getState());
+    if (!focused) return;
+    const host = document.querySelector(".canvas-host");
+    if (!(host instanceof HTMLElement)) return;
+    const { x, y, zoom } = getViewport();
+    const { width, height } = host.getBoundingClientRect();
+    const screenX = focused.position.x * zoom + x;
+    const screenY = focused.position.y * zoom + y;
+    const margin = 96;
+    if (
+      screenX >= margin &&
+      screenY >= margin &&
+      screenX <= width - margin &&
+      screenY <= height - margin
+    ) {
+      return;
+    }
+    void setCenter(focused.position.x, focused.position.y, { zoom, duration: 200 });
+  }, [selectionNavTick, getViewport, setCenter]);
 
   useEffect(() => {
     function isTypingTarget(target: EventTarget | null) {
@@ -134,10 +159,20 @@ function FlowCanvas() {
 
   const closeMenu = useCallback(() => setMenu(null), []);
 
+  const handleSelectionEnd = useCallback(
+    (event: ReactMouseEvent) => {
+      useMindMapStore.getState().focusNearestSelected(
+        screenToFlowPosition({ x: event.clientX, y: event.clientY }),
+      );
+    },
+    [screenToFlowPosition],
+  );
+
   const handleNodeContextMenu = useCallback(
     (event: ReactMouseEvent, node: FlowNode) => {
       event.preventDefault();
       useMindMapStore.setState((state) => ({
+        lastSelectedId: node.id,
         nodes: state.nodes.map((item) => ({
           ...item,
           selected: item.id === node.id,
@@ -178,6 +213,7 @@ function FlowCanvas() {
         }}
         onPaneClick={closeMenu}
         onMoveStart={closeMenu}
+        onSelectionEnd={handleSelectionEnd}
         minZoom={0.2}
         maxZoom={2}
         deleteKeyCode={null}
@@ -194,6 +230,7 @@ function FlowCanvas() {
         panOnScroll
         nodesFocusable={false}
         edgesFocusable={false}
+        disableKeyboardA11y
         proOptions={{ hideAttribution: false }}
       >
         <Background
@@ -212,10 +249,7 @@ function FlowCanvas() {
           position="bottom-right"
           pannable
           zoomable
-          nodeColor={(node) => {
-            const color = (node as FlowNode).data?.color ?? "stone";
-            return NODE_COLORS[color].border;
-          }}
+          nodeColor={(node) => getNodePalette((node as FlowNode).data?.color).border}
           maskColor="rgba(12, 14, 18, 0.7)"
           className="mindmap-minimap"
         />

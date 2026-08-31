@@ -582,6 +582,12 @@ a {
     0 12px 28px rgba(0, 0, 0, 0.25);
 }
 
+.mindmap-node.is-focused {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--node-border) 70%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
 .mindmap-text {
   display: inline-grid;
   align-items: center;
