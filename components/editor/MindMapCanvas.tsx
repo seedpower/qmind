@@ -225,7 +225,7 @@ function FlowCanvas() {
         nodeClickDistance={NODE_POINTER_SLOP}
         nodeDragThreshold={NODE_POINTER_SLOP}
         connectionDragThreshold={NODE_POINTER_SLOP}
-        panOnDrag={false}
+        panOnDrag={[2]}
         panActivationKeyCode="Space"
         panOnScroll
         nodesFocusable={false}

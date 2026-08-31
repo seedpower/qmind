@@ -21,6 +21,7 @@ import {
   getParentId,
   pickFocusAfterDelete,
   pickNodeInDirection,
+  reorderSiblingsByPosition,
   wouldCreateCycle,
   type NavDirection,
 } from "@/lib/graph";
@@ -312,11 +313,29 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       get().lastSelectedId,
       changes,
     );
+    const primaryDragEnds = changes.filter(
+      (change): change is NodePositionChange =>
+        change.type === "position" && change.dragging === false,
+    );
+    const reordered =
+      primaryDragEnds.length === 1
+        ? reorderSiblingsByPosition(
+            primaryDragEnds[0].id,
+            nextNodes,
+            edges,
+            get().layoutMode,
+          )
+        : null;
+
     set({
-      nodes: nextNodes,
+      nodes: reordered?.nodes ?? nextNodes,
+      edges: reordered?.edges ?? edges,
       lastSelectedId,
-      saveStatus: hydrated && (dragEnded || removed) ? "dirty" : get().saveStatus,
+      saveStatus: hydrated && (dragEnded || removed || reordered) ? "dirty" : get().saveStatus,
     });
+    if (reordered) {
+      commitGraph(reordered.nodes, reordered.edges);
+    }
   },
 
   onEdgesChange: (changes) => {

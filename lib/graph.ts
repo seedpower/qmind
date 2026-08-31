@@ -184,6 +184,90 @@ export function pickNodeInDirection<T extends NavNode>(
   return direction === prev ? (ordered[index - 1] ?? null) : (ordered[index + 1] ?? null);
 }
 
+function siblingSortValue(
+  node: NavNode,
+  parent: NavNode | null,
+  layoutMode: LayoutMode,
+): number {
+  if (layoutMode === "DOWN") return node.position.x;
+  if (layoutMode === "RADIAL" && parent) {
+    return Math.atan2(
+      node.position.y - parent.position.y,
+      node.position.x - parent.position.x,
+    );
+  }
+  return node.position.y;
+}
+
+function spliceGroupByIds<T extends { id: string }>(items: T[], orderedIds: string[]): T[] {
+  const idSet = new Set(orderedIds);
+  const byId = new Map(items.map((item) => [item.id, item]));
+  const result: T[] = [];
+  let inserted = false;
+  for (const item of items) {
+    if (!idSet.has(item.id)) {
+      result.push(item);
+      continue;
+    }
+    if (inserted) continue;
+    for (const id of orderedIds) {
+      const next = byId.get(id);
+      if (next) result.push(next);
+    }
+    inserted = true;
+  }
+  return result;
+}
+
+/** Reorder a node's siblings from its dropped position. Returns null if order is unchanged. */
+export function reorderSiblingsByPosition<T extends NavNode, E extends NavEdge>(
+  draggedId: string,
+  nodes: T[],
+  edges: E[],
+  layoutMode: LayoutMode,
+): { nodes: T[]; edges: E[] } | null {
+  const parentId = getParentId(draggedId, edges);
+  if (!parentId) return null;
+  const siblingIds = getChildIds(parentId, edges);
+  if (siblingIds.length < 2 || !siblingIds.includes(draggedId)) return null;
+
+  const parent = findNode(nodes, parentId);
+  const siblings = siblingIds
+    .map((id) => findNode(nodes, id))
+    .filter((node): node is T => node !== null);
+  const nextIds = [...siblings]
+    .sort((a, b) => {
+      const delta =
+        siblingSortValue(a, parent, layoutMode) -
+        siblingSortValue(b, parent, layoutMode);
+      return delta || siblingIds.indexOf(a.id) - siblingIds.indexOf(b.id);
+    })
+    .map((node) => node.id);
+  if (nextIds.every((id, index) => id === siblingIds[index])) return null;
+
+  const idSet = new Set(nextIds);
+  const edgeByTarget = new Map(
+    edges
+      .filter((edge) => edge.source === parentId && idSet.has(edge.target))
+      .map((edge) => [edge.target, edge]),
+  );
+  const siblingEdges = nextIds
+    .map((id) => edgeByTarget.get(id))
+    .filter((edge): edge is E => edge !== undefined);
+  const firstIdx = edges.findIndex(
+    (edge) => edge.source === parentId && idSet.has(edge.target),
+  );
+  const rest = edges.filter(
+    (edge) => !(edge.source === parentId && idSet.has(edge.target)),
+  );
+  const insertAt = firstIdx < 0 ? rest.length : Math.min(firstIdx, rest.length);
+
+  return {
+    nodes: spliceGroupByIds(nodes, nextIds),
+    edges: [...rest.slice(0, insertAt), ...siblingEdges, ...rest.slice(insertAt)],
+  };
+}
+
 /** After deleting `focusId`, pick the next node to keep selected. */
 export function pickFocusAfterDelete(
   focusId: string,

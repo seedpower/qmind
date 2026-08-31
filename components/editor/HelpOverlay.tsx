@@ -24,6 +24,10 @@ export default function HelpOverlay({
             <span>框选多个节点</span>
           </li>
           <li>
+            <kbd>右键拖拽</kbd>
+            <span>平移画布</span>
+          </li>
+          <li>
             <kbd>Space + 拖拽</kbd>
             <span>平移画布</span>
           </li>
@@ -42,6 +46,10 @@ export default function HelpOverlay({
           <li>
             <kbd>拖到空白处</kbd>
             <span>从节点拉出子节点</span>
+          </li>
+          <li>
+            <kbd>拖到同级旁边</kbd>
+            <span>松开后与兄弟节点调换顺序</span>
           </li>
           <li>
             <kbd>↑ ↓ ← →</kbd>

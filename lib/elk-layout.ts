@@ -36,6 +36,7 @@ function optionsFor(mode: LayoutMode): Record<string, string> {
     "elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
     "elk.layered.nodePlacement.bk.fixedAlignment": "BALANCED",
     "elk.layered.crossingMinimization.strategy": "LAYER_SWEEP",
+    "elk.layered.crossingMinimization.forceNodeModelOrder": "true",
     "elk.layered.considerModelOrder.strategy": "NODES_AND_EDGES",
     "elk.separateConnectedComponents": "true",
   };
