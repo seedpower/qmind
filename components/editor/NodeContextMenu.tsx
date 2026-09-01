@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardPaste, Copy, GitBranch, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, Copy, GitBranch, Plus, Scissors, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { COLOR_ORDER, NODE_COLORS, type NodeColor } from "@/lib/types";
@@ -30,8 +30,12 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const addChildNode = useMindMapStore((s) => s.addChildNode);
   const addSiblingNode = useMindMapStore((s) => s.addSiblingNode);
   const copySelection = useMindMapStore((s) => s.copySelection);
+  const cutSelection = useMindMapStore((s) => s.cutSelection);
   const pasteOntoSelection = useMindMapStore((s) => s.pasteOntoSelection);
   const clipboard = useMindMapStore((s) => s.clipboard);
+  const canCut = useMindMapStore((s) =>
+    s.nodes.some((item) => item.selected && !item.data.isRoot),
+  );
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
@@ -109,6 +113,21 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         type="button"
         role="menuitem"
         className="node-menu-item"
+        disabled={!canCut}
+        title={canCut ? undefined : "The central topic cannot be cut"}
+        onClick={() => {
+          cutSelection();
+          onClose();
+        }}
+      >
+        <Scissors size={14} />
+        Cut
+        <kbd>⌘X</kbd>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="node-menu-item"
         onClick={() => {
           copySelection();
           onClose();
@@ -123,7 +142,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         role="menuitem"
         className="node-menu-item"
         disabled={!clipboard}
-        title={clipboard ? undefined : "Copy nodes first"}
+        title={clipboard ? undefined : "Copy or cut nodes first"}
         onClick={() => {
           pasteOntoSelection(nodeId);
           onClose();

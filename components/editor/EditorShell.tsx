@@ -118,6 +118,11 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
           useMindMapStore.getState().copySelection();
           return;
         }
+        if (key === "x") {
+          event.preventDefault();
+          useMindMapStore.getState().cutSelection();
+          return;
+        }
         if (key === "v") {
           event.preventDefault();
           useMindMapStore.getState().pasteOntoSelection();

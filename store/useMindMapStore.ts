@@ -116,6 +116,7 @@ type MindMapState = {
   addChildNode: (parentId: string, position?: { x: number; y: number }, afterId?: string) => string | null;
   addSiblingNode: (nodeId: string) => string | null;
   copySelection: () => void;
+  cutSelection: () => void;
   pasteOntoSelection: (parentId?: string) => void;
   canUndo: boolean;
   canRedo: boolean;
@@ -286,6 +287,40 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   const commitGraph = (nodes: FlowNode[], edges: FlowEdge[]) => {
     pending = { nodes, edges, gen: ++gen };
     void flushPendingLayout();
+  };
+
+  const commitRemoval = (
+    selected: FlowNode[],
+    nodes: FlowNode[],
+    edges: FlowEdge[],
+  ) => {
+    const removeIds = new Set<string>();
+    for (const node of selected) {
+      removeIds.add(node.id);
+      for (const id of getDescendantIds(node.id, edges)) {
+        removeIds.add(id);
+      }
+    }
+    const remaining = nodes.filter((node) => !removeIds.has(node.id));
+    const remainingIds = new Set(remaining.map((node) => node.id));
+    const focusId = selected[selected.length - 1]?.id;
+    const nextSelectedId =
+      (focusId ? pickFocusAfterDelete(focusId, remainingIds, edges) : null) ??
+      remaining.find((node) => node.data.isRoot)?.id ??
+      remaining[0]?.id ??
+      null;
+
+    commitGraph(
+      remaining.map((node) => ({
+        ...node,
+        selected: node.id === nextSelectedId,
+        data: { ...node.data, editing: false },
+      })),
+      edges.filter(
+        (edge) => !removeIds.has(edge.source) && !removeIds.has(edge.target),
+      ),
+    );
+    return nextSelectedId;
   };
 
   return {
@@ -588,6 +623,20 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     set({ clipboard });
   },
 
+  cutSelection: () => {
+    const { nodes, edges } = graphNow();
+    const selected = nodes.filter((node) => node.selected && !node.data.isRoot);
+    const clipboard = collectNodeClipboard(
+      selected.map((node) => node.id),
+      nodes,
+      edges,
+    );
+    if (!clipboard || selected.length === 0) return;
+    const history = recordHistory();
+    const nextSelectedId = commitRemoval(selected, nodes, edges);
+    set({ lastSelectedId: nextSelectedId, clipboard, ...history });
+  },
+
   pasteOntoSelection: (parentId) => {
     const clipboard = get().clipboard;
     if (!clipboard) return;
@@ -736,32 +785,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       : nodes.filter((node) => node.selected && !node.data.isRoot);
     if (selected.length === 0) return;
     const history = recordHistory();
-    const removeIds = new Set<string>();
-    for (const node of selected) {
-      removeIds.add(node.id);
-      for (const id of getDescendantIds(node.id, edges)) {
-        removeIds.add(id);
-      }
-    }
-    const remaining = nodes.filter((node) => !removeIds.has(node.id));
-    const remainingIds = new Set(remaining.map((node) => node.id));
-    const focusId = selected[selected.length - 1]?.id;
-    const nextSelectedId =
-      (focusId ? pickFocusAfterDelete(focusId, remainingIds, edges) : null) ??
-      remaining.find((node) => node.data.isRoot)?.id ??
-      remaining[0]?.id ??
-      null;
-
-    commitGraph(
-      remaining.map((node) => ({
-        ...node,
-        selected: node.id === nextSelectedId,
-        data: { ...node.data, editing: false },
-      })),
-      edges.filter(
-        (edge) => !removeIds.has(edge.source) && !removeIds.has(edge.target),
-      ),
-    );
+    const nextSelectedId = commitRemoval(selected, nodes, edges);
     set({ lastSelectedId: nextSelectedId, ...history });
   },
 

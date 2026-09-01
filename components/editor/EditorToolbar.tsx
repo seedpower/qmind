@@ -13,6 +13,7 @@ import {
   Orbit,
   Plus,
   Redo2,
+  Scissors,
   Trash2,
   Undo2,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export default function EditorToolbar({ onHelp }: Props) {
   const nodes = useMindMapStore((s) => s.nodes);
   const addChildNode = useMindMapStore((s) => s.addChildNode);
   const copySelection = useMindMapStore((s) => s.copySelection);
+  const cutSelection = useMindMapStore((s) => s.cutSelection);
   const pasteOntoSelection = useMindMapStore((s) => s.pasteOntoSelection);
   const clipboard = useMindMapStore((s) => s.clipboard);
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
@@ -46,6 +48,7 @@ export default function EditorToolbar({ onHelp }: Props) {
 
   const selected = useMindMapStore(getFocusedNode);
   const hasSelection = nodes.some((node) => node.selected);
+  const canCut = nodes.some((node) => node.selected && !node.data.isRoot);
   const canDelete = Boolean(selected && !selected.data.isRoot);
 
   return (
@@ -94,6 +97,15 @@ export default function EditorToolbar({ onHelp }: Props) {
         >
           <Plus size={15} />
           Child
+        </button>
+        <button
+          type="button"
+          className="tool-btn"
+          disabled={!canCut}
+          onClick={() => cutSelection()}
+        >
+          <Scissors size={15} />
+          Cut
         </button>
         <button
           type="button"

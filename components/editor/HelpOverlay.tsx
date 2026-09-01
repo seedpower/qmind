@@ -72,6 +72,10 @@ export default function HelpOverlay({
             <span>Copy selected nodes and their branches</span>
           </li>
           <li>
+            <kbd>⌘ / Ctrl + X</kbd>
+            <span>Cut selected nodes and their branches</span>
+          </li>
+          <li>
             <kbd>⌘ / Ctrl + V</kbd>
             <span>Paste onto the selected node</span>
           </li>
