@@ -177,10 +177,13 @@ export async function getMap(id: string): Promise<MindMapDocument | null> {
   return doc ? serialize(doc) : null;
 }
 
-export async function createMap(title?: string): Promise<MindMapDocument> {
+export async function createMap(
+  title?: string,
+  rootLabel?: string,
+): Promise<MindMapDocument> {
   const col = await mapsCollection();
   const now = new Date();
-  const nodes = [createRootNode()];
+  const nodes = [createRootNode(rootLabel?.trim() || undefined)];
   const record: MapRecord = {
     title: (title?.trim() || DEFAULT_MAP_TITLE).slice(0, 80),
     nodes,

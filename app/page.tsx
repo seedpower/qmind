@@ -1,5 +1,6 @@
 import QMindMark from "@/components/brand/QMindMark";
 import CreateMapButton from "@/components/dashboard/CreateMapButton";
+import HomeActions from "@/components/dashboard/HomeActions";
 import MapCard from "@/components/dashboard/MapCard";
 import { listMaps } from "@/lib/maps";
 
@@ -26,7 +27,7 @@ export default async function HomePage() {
           </div>
           <p className="lede">Lay ideas out. Drag a line, grow the next layer.</p>
         </div>
-        <CreateMapButton />
+        <HomeActions />
       </header>
 
       {error ? (

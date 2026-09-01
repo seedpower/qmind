@@ -30,3 +30,34 @@ Open the URL printed in the terminal (default [http://localhost:3000](http://loc
 - Edits are written to MongoDB `qmind.maps` after about a second
 
 Each map is stored as a single document (nodes and edges nested together). The list page only projects title and node count.
+
+## MCP
+
+QMind exposes the same editing capabilities as a remote [MCP](https://modelcontextprotocol.io/) server at:
+
+```
+https://<your-host>/api/mcp
+```
+
+Locally that is `http://localhost:3000/api/mcp` (or whichever port `next dev` prints).
+
+Open **Settings** on the home page and generate an API key. Copy the Cursor / agent snippet from the dialog. The key is shown once; QMind stores only a hash.
+
+Until a key exists (and `MCP_API_KEY` is unset), the endpoint stays open. After you generate one, clients must send `Authorization: Bearer <key>`.
+
+You can still set `MCP_API_KEY` in the environment as an additional accepted key.
+
+Stdio-only clients can proxy with [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+
+```json
+{
+  "mcpServers": {
+    "qmind": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "http://localhost:3000/api/mcp"]
+    }
+  }
+}
+```
+
+Tools: `list_maps`, `create_map`, `get_map`, `rename_map`, `delete_map`, `get_node`, `add_node`, `update_node`, `delete_node`, `move_node`, `layout_map`, `search_nodes`.

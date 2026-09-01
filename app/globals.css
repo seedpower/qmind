@@ -58,6 +58,13 @@ a {
   margin-bottom: 48px;
 }
 
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .eyebrow {
   margin: 0 0 8px;
   letter-spacing: 0.28em;
@@ -122,6 +129,133 @@ a {
   background: transparent;
   color: var(--paper);
   border: 1px solid var(--line);
+}
+
+.create-btn.ghost.danger:hover {
+  border-color: rgba(232, 93, 108, 0.5);
+  color: #ffb4bc;
+}
+
+.settings-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(86vh, 840px);
+  overflow: auto;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--ink-2);
+}
+
+.settings-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.settings-dialog-head h2 {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 520;
+}
+
+.settings-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.settings-card-head svg {
+  margin-top: 4px;
+  color: var(--gold);
+}
+
+.settings-card-head h2 {
+  margin: 0 0 6px;
+  font-family: var(--font-title);
+  font-size: 20px;
+  font-weight: 520;
+}
+
+.settings-card-head p,
+.settings-note,
+.settings-meta,
+.settings-warning,
+.settings-error {
+  margin: 0;
+  color: var(--paper-dim);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.settings-field {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.settings-field span {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+
+.settings-field code,
+.settings-note code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: var(--paper);
+  word-break: break-all;
+}
+
+.settings-field > code {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ink);
+}
+
+.settings-snippet {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.settings-snippet:focus {
+  outline: none;
+  border-color: rgba(232, 168, 56, 0.45);
+}
+
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.settings-warning {
+  color: var(--gold);
+}
+
+.settings-error {
+  color: #ffb4bc;
+}
+
+.settings-meta,
+.settings-note {
+  margin-top: 8px;
 }
 
 .map-grid {
