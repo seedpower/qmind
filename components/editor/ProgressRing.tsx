@@ -54,12 +54,12 @@ export function ProgressPicker({
   onChange: (progress: NodeProgress | undefined) => void;
 }) {
   return (
-    <div className="progress-row" role="group" aria-label="节点进度">
+    <div className="progress-row" role="group" aria-label="Node progress">
       <button
         type="button"
         className={`progress-dot ${value == null ? "active" : ""}`}
-        title="无进度"
-        aria-label="无进度"
+        title="No progress"
+        aria-label="No progress"
         disabled={disabled}
         onClick={() => onChange(undefined)}
       >
@@ -71,7 +71,7 @@ export function ProgressPicker({
           type="button"
           className={`progress-dot ${value === step ? "active" : ""}`}
           title={`${step}%`}
-          aria-label={`进度 ${step}%`}
+          aria-label={`Progress ${step}%`}
           disabled={disabled}
           onClick={() => onChange(value === step ? undefined : step)}
         >

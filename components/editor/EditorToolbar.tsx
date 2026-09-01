@@ -49,7 +49,7 @@ export default function EditorToolbar({ onHelp }: Props) {
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           maxLength={80}
-          aria-label="脑图标题"
+          aria-label="Map title"
         />
       </div>
 
@@ -61,7 +61,7 @@ export default function EditorToolbar({ onHelp }: Props) {
           onClick={() => selected && addChildNode(selected.id)}
         >
           <Plus size={15} />
-          子节点
+          Child
         </button>
         <button
           type="button"
@@ -70,7 +70,7 @@ export default function EditorToolbar({ onHelp }: Props) {
           onClick={() => deleteSelection()}
         >
           <Trash2 size={15} />
-          删除
+          Delete
         </button>
         <div className="layout-group">
           <button
@@ -84,13 +84,13 @@ export default function EditorToolbar({ onHelp }: Props) {
             ) : (
               <LayoutTemplate size={15} />
             )}
-            {layouting ? "排版中" : "整理"}
+            {layouting ? "Arranging" : "Arrange"}
           </button>
           <button
             type="button"
             className="tool-btn compact"
             disabled={layouting}
-            title="向下排版"
+            title="Layout downward"
             onClick={() => void autoLayout("DOWN")}
           >
             <ArrowDown size={15} />
@@ -99,13 +99,13 @@ export default function EditorToolbar({ onHelp }: Props) {
             type="button"
             className="tool-btn compact"
             disabled={layouting}
-            title="辐射排版"
+            title="Radial layout"
             onClick={() => void autoLayout("RADIAL")}
           >
             <Orbit size={15} />
           </button>
         </div>
-        <div className="color-row" role="group" aria-label="节点颜色">
+        <div className="color-row" role="group" aria-label="Node color">
           {COLOR_ORDER.map((color) => (
             <button
               key={color}
@@ -127,7 +127,7 @@ export default function EditorToolbar({ onHelp }: Props) {
 
       <div className="toolbar-right">
         <SaveBadge status={saveStatus} count={nodes.length} />
-        <button type="button" className="icon-btn" onClick={onHelp} title="快捷键">
+        <button type="button" className="icon-btn" onClick={onHelp} title="Shortcuts">
           <HelpCircle size={16} />
         </button>
         <span className="branch-mark">
@@ -147,12 +147,12 @@ function SaveBadge({
 }) {
   const label =
     status === "saving"
-      ? "保存中"
+      ? "Saving"
       : status === "dirty"
-        ? "未保存"
+        ? "Unsaved"
         : status === "error"
-          ? "保存失败"
-          : "已保存";
+          ? "Save failed"
+          : "Saved";
 
   return (
     <span className={`save-badge is-${status}`}>
@@ -162,7 +162,9 @@ function SaveBadge({
         <Check size={13} />
       )}
       {label}
-      <span className="count">{count} 节点</span>
+      <span className="count">
+        {count} {count === 1 ? "node" : "nodes"}
+      </span>
     </span>
   );
 }

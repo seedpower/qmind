@@ -8,13 +8,13 @@ import { useMindMapStore } from "@/store/useMindMapStore";
 import { ProgressPicker } from "./ProgressRing";
 
 const COLOR_LABELS: Record<NodeColor, string> = {
-  amber: "琥珀",
-  rose: "玫红",
-  teal: "青绿",
-  violet: "紫",
-  sky: "天蓝",
-  lime: "叶绿",
-  stone: "石灰",
+  amber: "Amber",
+  rose: "Rose",
+  teal: "Teal",
+  violet: "Violet",
+  sky: "Sky",
+  lime: "Lime",
+  stone: "Stone",
 };
 
 type Props = {
@@ -69,7 +69,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
       ref={menuRef}
       className="node-menu"
       role="menu"
-      aria-label="节点操作"
+      aria-label="Node actions"
       style={{ left: x, top: y }}
       onContextMenu={(event) => event.preventDefault()}
       onPointerDown={(event) => event.stopPropagation()}
@@ -84,7 +84,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         }}
       >
         <Plus size={14} />
-        新建子节点
+        Add child
         <kbd>Tab</kbd>
       </button>
       <button
@@ -92,19 +92,19 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         role="menuitem"
         className="node-menu-item"
         disabled={isRoot}
-        title={isRoot ? "中心主题没有同级" : undefined}
+        title={isRoot ? "The central topic has no siblings" : undefined}
         onClick={() => {
           addSiblingNode(nodeId);
           onClose();
         }}
       >
         <GitBranch size={14} />
-        新建同级节点
+        Add sibling
         <kbd>Enter</kbd>
       </button>
       <div className="node-menu-sep" />
-      <div className="node-menu-label">颜色</div>
-      <div className="node-menu-colors" role="group" aria-label="节点颜色">
+      <div className="node-menu-label">Color</div>
+      <div className="node-menu-colors" role="group" aria-label="Node color">
         {COLOR_ORDER.map((color) => (
           <button
             key={color}
@@ -121,7 +121,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         ))}
       </div>
       <div className="node-menu-sep" />
-      <div className="node-menu-label">进度</div>
+      <div className="node-menu-label">Progress</div>
       <div className="node-menu-progress">
         <ProgressPicker
           value={node.data.progress}
@@ -134,14 +134,14 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         role="menuitem"
         className="node-menu-item danger"
         disabled={isRoot}
-        title={isRoot ? "不能删除中心主题" : undefined}
+        title={isRoot ? "The central topic cannot be deleted" : undefined}
         onClick={() => {
           deleteSelection(nodeId);
           onClose();
         }}
       >
         <Trash2 size={14} />
-        删除节点
+        Delete node
         <kbd>Del</kbd>
       </button>
     </div>,

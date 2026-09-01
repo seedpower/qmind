@@ -1,32 +1,32 @@
 # QMind
 
-思维导图工作台：Next.js App Router + MongoDB + [xyflow](https://reactflow.dev/)。
+A mind-map workspace built with the Next.js App Router, MongoDB, and [xyflow](https://reactflow.dev/).
 
-## 运行
+## Run
 
-1. 本地 MongoDB 监听 `27017`（当前仓库默认连接 `mongodb://127.0.0.1:27017`）。
-2. 复制环境变量：
+1. Start local MongoDB on `27017` (this repo defaults to `mongodb://127.0.0.1:27017`).
+2. Copy environment variables:
 
 ```bash
 cp .env.example .env.local
 ```
 
-3. 安装并启动：
+3. Install and start:
 
 ```bash
 npm install
 npm run dev
 ```
 
-打开终端提示的地址（默认 [http://localhost:3000](http://localhost:3000)；若 3000 被占用会自动改用 3001）。
+Open the URL printed in the terminal (default [http://localhost:3000](http://localhost:3000); if 3000 is taken it falls back to 3001).
 
-## 使用
+## Use
 
-- 首页创建脑图，点击卡片进入画布
-- 从节点右侧手柄拖到空白处：生成子节点
-- `Tab` 添加子节点，`Enter` 添加同级，`Delete` 删除子树
-- 工具栏 **整理** 使用 [ELK.js](https://github.com/kieler/elkjs) 自动排版（向右层次 / 向下 / 辐射）
-- `L` 向右整理，`Shift+L` 辐射排版
-- 修改后约 1 秒自动写入 MongoDB `qmind.maps`
+- Create a map from the home page, then open a card to edit
+- Drag from a node's right handle onto empty space to create a child
+- `Tab` adds a child, `Enter` adds a sibling, `Delete` removes a subtree
+- Toolbar **Arrange** runs [ELK.js](https://github.com/kieler/elkjs) (right / down / radial)
+- `L` arranges to the right, `Shift+L` uses radial layout
+- Edits are written to MongoDB `qmind.maps` after about a second
 
-脑图以单文档存储（节点和边嵌在同一份 document 里），列表页只投影标题与节点数。
+Each map is stored as a single document (nodes and edges nested together). The list page only projects title and node count.

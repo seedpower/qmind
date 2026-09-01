@@ -2,7 +2,7 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useEffect, useRef } from "react";
-import { getNodePalette } from "@/lib/types";
+import { DEFAULT_NODE_LABEL, getNodePalette } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 import { ProgressRing } from "./ProgressRing";
 
@@ -71,7 +71,7 @@ export default function MindMapNode({
       ) : null}
       <div className="mindmap-text">
         <span className="mindmap-sizer" aria-hidden>
-          {data.label || (data.editing ? " " : "新节点")}
+          {data.label || (data.editing ? " " : DEFAULT_NODE_LABEL)}
         </span>
         {data.editing ? (
           <input
@@ -100,13 +100,13 @@ export default function MindMapNode({
             spellCheck={false}
           />
         ) : (
-          <span className="mindmap-label">{data.label || "新节点"}</span>
+          <span className="mindmap-label">{data.label || DEFAULT_NODE_LABEL}</span>
         )}
       </div>
       <button
         type="button"
         className="mindmap-add nodrag nopan"
-        title="添加子节点 (Tab)"
+        title="Add child (Tab)"
         onClick={(event) => {
           event.stopPropagation();
           addChildNode(id);

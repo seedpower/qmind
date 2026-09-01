@@ -72,6 +72,10 @@ export type MindMapDocument = MindMapSummary & {
 
 export const MAX_NODES = 2000;
 
+export const DEFAULT_NODE_LABEL = "New node";
+export const DEFAULT_ROOT_LABEL = "Central topic";
+export const DEFAULT_MAP_TITLE = "Untitled map";
+
 /** React Flow node origin: position is the center of each mindmap node. */
 export const FLOW_NODE_ORIGIN: [number, number] = [0.5, 0.5];
 

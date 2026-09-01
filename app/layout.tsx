@@ -13,14 +13,14 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "QMind — 思维导图",
-  description: "QMind：用 Next.js、MongoDB 与 xyflow 构建的思维导图工作台",
+  title: "QMind — mind maps",
+  description: "QMind: a mind-map workspace built with Next.js, MongoDB, and xyflow",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="zh-CN"
+      lang="en"
       className={`${fraunces.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full">{children}</body>

@@ -4,6 +4,9 @@ import { ObjectId, type Collection, type WithId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import {
   MAX_NODES,
+  DEFAULT_MAP_TITLE,
+  DEFAULT_NODE_LABEL,
+  DEFAULT_ROOT_LABEL,
   type MindMapDocument,
   type MindMapSummary,
   isNodeProgress,
@@ -49,7 +52,7 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
       return [];
     }
     const label =
-      typeof data?.label === "string" ? data.label.slice(0, 200) : "新节点";
+      typeof data?.label === "string" ? data.label.slice(0, 200) : DEFAULT_NODE_LABEL;
     return [
       {
         id: node.id,
@@ -138,7 +141,7 @@ async function mapsCollection(): Promise<Collection<MapRecord>> {
   return col;
 }
 
-export function createRootNode(label = "中心主题"): PersistedNode {
+export function createRootNode(label = DEFAULT_ROOT_LABEL): PersistedNode {
   return {
     id: "root",
     type: "mindmap",
@@ -179,7 +182,7 @@ export async function createMap(title?: string): Promise<MindMapDocument> {
   const now = new Date();
   const nodes = [createRootNode()];
   const record: MapRecord = {
-    title: (title?.trim() || "未命名脑图").slice(0, 80),
+    title: (title?.trim() || DEFAULT_MAP_TITLE).slice(0, 80),
     nodes,
     edges: [],
     viewport: DEFAULT_VIEWPORT,
@@ -206,7 +209,7 @@ export async function updateMap(
   const update: Partial<MapRecord> = { updatedAt: new Date() };
 
   if (typeof patch.title === "string") {
-    update.title = patch.title.trim().slice(0, 80) || "未命名脑图";
+    update.title = patch.title.trim().slice(0, 80) || DEFAULT_MAP_TITLE;
   }
   if (patch.nodes !== undefined) {
     const nodes = sanitizeNodes(patch.nodes);

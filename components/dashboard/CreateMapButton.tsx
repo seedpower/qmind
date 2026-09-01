@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { DEFAULT_MAP_TITLE } from "@/lib/types";
 
 export default function CreateMapButton({
   variant = "primary",
@@ -19,7 +20,7 @@ export default function CreateMapButton({
       const res = await fetch("/api/maps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: "未命名脑图" }),
+        body: JSON.stringify({ title: DEFAULT_MAP_TITLE }),
       });
       if (!res.ok) throw new Error("create failed");
       const map = (await res.json()) as { id: string };
@@ -37,7 +38,7 @@ export default function CreateMapButton({
       disabled={pending}
     >
       <Plus size={16} />
-      {pending ? "创建中…" : "新建脑图"}
+      {pending ? "Creating…" : "New map"}
     </button>
   );
 }

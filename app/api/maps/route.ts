@@ -10,7 +10,7 @@ export async function GET() {
   } catch (error) {
     console.error("GET /api/maps", error);
     return NextResponse.json(
-      { error: "无法读取脑图列表" },
+      { error: "Could not load maps" },
       { status: 500 },
     );
   }
@@ -25,6 +25,6 @@ export async function POST(request: Request) {
     return NextResponse.json(map, { status: 201 });
   } catch (error) {
     console.error("POST /api/maps", error);
-    return NextResponse.json({ error: "无法创建脑图" }, { status: 500 });
+    return NextResponse.json({ error: "Could not create map" }, { status: 500 });
   }
 }

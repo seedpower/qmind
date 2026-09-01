@@ -29,6 +29,7 @@ import {
 } from "@/lib/graph";
 import {
   COLOR_ORDER,
+  DEFAULT_NODE_LABEL,
   type LayoutMode,
   type MindMapDocument,
   type MindMapNodeData,
@@ -378,7 +379,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       position: position ?? afterNode?.position ?? parent.position,
       selected: true,
       data: {
-        label: "新节点",
+        label: DEFAULT_NODE_LABEL,
         color: nextColor(parent.data.color),
         editing: true,
       },
@@ -462,7 +463,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     set({
       nodes: get().nodes.map((node) => {
         if (node.id !== id) return node;
-        const label = node.data.label.trim() || "新节点";
+        const label = node.data.label.trim() || DEFAULT_NODE_LABEL;
         return {
           ...node,
           data: { ...node.data, label, editing: false },

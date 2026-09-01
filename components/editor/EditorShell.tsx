@@ -9,7 +9,7 @@ import HelpOverlay from "./HelpOverlay";
 
 const MindMapCanvas = dynamic(() => import("./MindMapCanvas"), {
   ssr: false,
-  loading: () => <div className="canvas-loading">正在展开画布…</div>,
+  loading: () => <div className="canvas-loading">Unfolding canvas…</div>,
 });
 
 function serializeNodes(nodes: ReturnType<typeof useMindMapStore.getState>["nodes"]): PersistedNode[] {

@@ -17,71 +17,71 @@ export default function HelpOverlay({
         role="dialog"
         aria-labelledby="help-title"
       >
-        <h2 id="help-title">画布快捷键</h2>
+        <h2 id="help-title">Canvas shortcuts</h2>
         <ul>
           <li>
-            <kbd>空白处拖拽</kbd>
-            <span>框选多个节点</span>
+            <kbd>Drag on empty space</kbd>
+            <span>Box-select nodes</span>
           </li>
           <li>
-            <kbd>右键拖拽</kbd>
-            <span>平移画布</span>
+            <kbd>Right-drag</kbd>
+            <span>Pan the canvas</span>
           </li>
           <li>
-            <kbd>Space + 拖拽</kbd>
-            <span>平移画布</span>
+            <kbd>Space + drag</kbd>
+            <span>Pan the canvas</span>
           </li>
           <li>
-            <kbd>Shift + 点击</kbd>
-            <span>加减选中节点</span>
+            <kbd>Shift + click</kbd>
+            <span>Add or remove from selection</span>
           </li>
           <li>
-            <kbd>右键节点</kbd>
-            <span>新建、删除、改颜色和进度</span>
+            <kbd>Right-click a node</kbd>
+            <span>Create, delete, color, and progress</span>
           </li>
           <li>
-            <kbd>双击节点</kbd>
-            <span>编辑文字</span>
+            <kbd>Double-click a node</kbd>
+            <span>Edit the label</span>
           </li>
           <li>
-            <kbd>拖到空白处</kbd>
-            <span>从节点拉出子节点</span>
+            <kbd>Drag to empty space</kbd>
+            <span>Pull a child node from the handle</span>
           </li>
           <li>
-            <kbd>拖到同级旁边</kbd>
-            <span>松开后与兄弟节点调换顺序</span>
+            <kbd>Drop beside a sibling</kbd>
+            <span>Reorder siblings on release</span>
           </li>
           <li>
             <kbd>↑ ↓ ← →</kbd>
-            <span>沿父子 / 同级切换选中节点</span>
+            <span>Move selection among parent, child, and siblings</span>
           </li>
           <li>
             <kbd>Tab</kbd>
-            <span>添加子节点，随后自动排版</span>
+            <span>Add a child, then auto-layout</span>
           </li>
           <li>
             <kbd>Enter</kbd>
-            <span>在选中节点下方添加同级，随后自动排版</span>
+            <span>Add a sibling below the selection, then auto-layout</span>
           </li>
           <li>
             <kbd>Delete</kbd>
-            <span>删除子树并重新排版</span>
+            <span>Delete the subtree and re-layout</span>
           </li>
           <li>
             <kbd>L</kbd>
-            <span>ELK 向右整理；Shift+L 辐射排版</span>
+            <span>ELK layout to the right; Shift+L for radial</span>
           </li>
           <li>
             <kbd>⌘ / Ctrl + S</kbd>
-            <span>立即保存</span>
+            <span>Save now</span>
           </li>
           <li>
             <kbd>?</kbd>
-            <span>打开或关闭本说明</span>
+            <span>Show or hide this guide</span>
           </li>
         </ul>
         <button type="button" className="tool-btn" onClick={onClose}>
-          知道了
+          Got it
         </button>
       </div>
     </div>

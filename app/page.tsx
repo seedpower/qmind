@@ -12,7 +12,7 @@ export default async function HomePage() {
   try {
     maps = await listMaps();
   } catch {
-    error = "无法连接 MongoDB，请确认本地数据库已启动。";
+    error = "Could not connect to MongoDB. Make sure the local database is running.";
   }
 
   return (
@@ -24,7 +24,7 @@ export default async function HomePage() {
             <QMindMark size={52} />
             <h1>QMind</h1>
           </div>
-          <p className="lede">把想法铺开。拖一条线，长出下一层。</p>
+          <p className="lede">Lay ideas out. Drag a line, grow the next layer.</p>
         </div>
         <CreateMapButton />
       </header>
@@ -40,8 +40,8 @@ export default async function HomePage() {
             <span />
             <span />
           </div>
-          <h2>还没有脑图</h2>
-          <p>从中心主题开始，把分支拖到空白处即可生长。</p>
+          <h2>No maps yet</h2>
+          <p>Start from a central topic, then drag a branch onto empty space to grow it.</p>
           <CreateMapButton />
         </div>
       ) : (

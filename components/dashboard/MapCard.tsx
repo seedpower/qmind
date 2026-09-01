@@ -9,13 +9,13 @@ import type { MindMapSummary } from "@/lib/types";
 function relativeTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const minutes = Math.max(0, Math.floor(diff / 60_000));
-  if (minutes < 1) return "刚刚";
-  if (minutes < 60) return `${minutes} 分钟前`;
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
+  if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} 天前`;
-  return new Date(iso).toLocaleDateString("zh-CN");
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en");
 }
 
 export default function MapCard({ map }: { map: MindMapSummary }) {
@@ -53,7 +53,7 @@ export default function MapCard({ map }: { map: MindMapSummary }) {
         <h2>{map.title}</h2>
         <p>
           <GitFork size={13} />
-          {map.nodeCount} 个节点 · {when}
+          {map.nodeCount} {map.nodeCount === 1 ? "node" : "nodes"} · {when}
         </p>
       </Link>
       <button
@@ -63,7 +63,7 @@ export default function MapCard({ map }: { map: MindMapSummary }) {
         disabled={pending}
       >
         <Trash2 size={14} />
-        {confirming ? (pending ? "删除中" : "确认删除") : "删除"}
+        {confirming ? (pending ? "Deleting" : "Confirm delete") : "Delete"}
       </button>
     </article>
   );
