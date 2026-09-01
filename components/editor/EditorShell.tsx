@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getFocusedNode, useMindMapStore } from "@/store/useMindMapStore";
 import type { MindMapDocument, PersistedEdge, PersistedNode } from "@/lib/types";
 import EditorToolbar from "./EditorToolbar";
+import EditorWorkspace from "./EditorWorkspace";
 import HelpOverlay from "./HelpOverlay";
+import NodeMarkdownPane from "./NodeMarkdownPane";
 
 const MindMapCanvas = dynamic(() => import("./MindMapCanvas"), {
   ssr: false,
@@ -22,6 +24,7 @@ function serializeNodes(nodes: ReturnType<typeof useMindMapStore.getState>["node
       color: node.data.color,
       progress: node.data.progress,
       isRoot: node.data.isRoot,
+      ...(node.data.markdown ? { markdown: node.data.markdown } : {}),
     },
   }));
 }
@@ -205,9 +208,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
   return (
     <div className="editor-shell">
       <EditorToolbar onHelp={() => setHelpOpen(true)} />
-      <div className="editor-canvas">
-        <MindMapCanvas />
-      </div>
+      <EditorWorkspace canvas={<MindMapCanvas />} notes={<NodeMarkdownPane />} />
       <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );

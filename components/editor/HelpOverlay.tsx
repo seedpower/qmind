@@ -48,6 +48,14 @@ export default function HelpOverlay({
             <span>Replace the selected node's label</span>
           </li>
           <li>
+            <kbd>Select a node</kbd>
+            <span>Write markdown notes in the right pane</span>
+          </li>
+          <li>
+            <kbd>Drag the split</kbd>
+            <span>Resize the canvas and notes; double-click resets</span>
+          </li>
+          <li>
             <kbd>F2</kbd>
             <span>Edit the label in place; double-click does the same</span>
           </li>

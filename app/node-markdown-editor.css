@@ -1,0 +1,195 @@
+.node-md-compose {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
+}
+
+.node-md-compose.node-md-compose-fill .w-md-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.node-md-compose .w-md-editor {
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: var(--ink-2);
+  color: var(--paper);
+  box-shadow: none;
+  --color-canvas-default: var(--ink-2);
+  --md-editor-background-color: var(--ink-2);
+}
+
+.node-md-compose .w-md-editor-content {
+  overflow: hidden;
+  background: transparent;
+}
+
+.node-md-compose .w-md-editor-preview {
+  box-shadow: inset 1px 0 0 var(--line);
+  background: color-mix(in srgb, var(--ink-3) 70%, transparent);
+  color: var(--paper);
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown {
+  background: transparent;
+  color: var(--paper);
+  font-size: 13.5px;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  padding-left: 1.75em;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  padding-left: 1.75em;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown ul ul {
+  list-style-type: circle;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown li {
+  display: list-item;
+  margin: 0.2em 0;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown a {
+  color: var(--brand-green);
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown code {
+  background: var(--paper-faint);
+}
+
+.node-md-compose .w-md-editor-toolbar {
+  position: relative;
+  z-index: 5;
+  overflow: visible;
+  border-bottom: 1px solid var(--line);
+  background: var(--ink-3);
+  border-radius: 0;
+  padding: 0.3rem 0.4rem;
+}
+
+.node-md-compose .w-md-editor-toolbar li > button {
+  color: var(--paper-dim) !important;
+  height: 28px;
+  border-radius: 8px !important;
+}
+
+.node-md-compose .w-md-editor-toolbar li > button:hover,
+.node-md-compose .w-md-editor-toolbar li.active > button {
+  background: var(--gold-soft) !important;
+  color: var(--gold) !important;
+}
+
+.node-md-compose .w-md-editor-toolbar-divider {
+  background-color: var(--line) !important;
+}
+
+.node-md-compose .w-md-editor-toolbar > ul > li {
+  position: relative;
+}
+
+.node-md-compose .w-md-editor-toolbar > ul > li:has(.w-md-editor-toolbar-child.active) {
+  z-index: 60;
+}
+
+.node-md-compose .w-md-editor-toolbar-child,
+.node-md-compose .w-md-editor-toolbar-child.active {
+  z-index: 50 !important;
+  overflow: hidden;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
+  background: var(--ink-3) !important;
+  background-color: var(--ink-3) !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35) !important;
+}
+
+.node-md-compose .w-md-editor-toolbar-child .w-md-editor-toolbar {
+  background: var(--ink-3) !important;
+  background-color: var(--ink-3) !important;
+  border-bottom: 0 !important;
+}
+
+.node-md-compose .w-md-editor-text {
+  --md-editor-font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--md-editor-font-family) !important;
+  font-size: 13.5px !important;
+  line-height: 20px !important;
+  letter-spacing: normal !important;
+  font-variant-ligatures: none !important;
+  color: var(--paper) !important;
+  min-height: 0;
+}
+
+.node-md-compose .w-md-editor-text-pre,
+.node-md-compose .w-md-editor-text-pre > code,
+.node-md-compose .w-md-editor-text-input {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+  font-variant-ligatures: inherit !important;
+  font-weight: inherit !important;
+  tab-size: 2 !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+}
+
+.node-md-compose .w-md-editor-text-pre > code {
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: inherit !important;
+}
+
+.node-md-compose .w-md-editor-text-input {
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+  caret-color: var(--gold);
+}
+
+.node-md-compose .w-md-editor-text-pre .token {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+  letter-spacing: inherit !important;
+}
+
+.node-md-compose .w-md-editor-fullscreen,
+.w-md-editor.w-md-editor-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 200 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  background: var(--ink) !important;
+}
+
+
+html.node-md-fs,
+html.node-md-fs body {
+  overflow: hidden !important;
+}

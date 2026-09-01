@@ -35,6 +35,7 @@ export type MindMapNodeData = {
   color: NodeColor;
   progress?: NodeProgress;
   isRoot?: boolean;
+  markdown?: string;
   editing?: boolean;
   editSelectAll?: boolean;
 };
@@ -48,6 +49,7 @@ export type PersistedNode = {
     color: NodeColor;
     progress?: NodeProgress;
     isRoot?: boolean;
+    markdown?: string;
   };
 };
 
@@ -79,6 +81,8 @@ export type MindMapDocument = MindMapSummary & {
 };
 
 export const MAX_NODES = 2000;
+/** Cap per-node notes so a map payload cannot grow without bound. */
+export const MAX_NODE_MARKDOWN = 100_000;
 
 export const DEFAULT_NODE_LABEL = "New node";
 export const DEFAULT_ROOT_LABEL = "Central topic";

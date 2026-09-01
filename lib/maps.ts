@@ -4,6 +4,7 @@ import { ObjectId, type Collection, type WithId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import {
   MAX_NODES,
+  MAX_NODE_MARKDOWN,
   DEFAULT_MAP_TITLE,
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
@@ -47,6 +48,10 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
     }
     const label =
       typeof data?.label === "string" ? data.label.slice(0, 200) : DEFAULT_NODE_LABEL;
+    const markdown =
+      typeof data?.markdown === "string"
+        ? data.markdown.slice(0, MAX_NODE_MARKDOWN)
+        : undefined;
     return [
       {
         id: node.id,
@@ -57,6 +62,7 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
           color: isNodeColor(data?.color) ? data.color : DEFAULT_NODE_COLOR,
           progress: isNodeProgress(data?.progress) ? data.progress : undefined,
           isRoot: Boolean(data?.isRoot),
+          ...(markdown ? { markdown } : {}),
         },
       },
     ];

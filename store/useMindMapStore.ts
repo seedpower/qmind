@@ -34,6 +34,7 @@ import {
 import {
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
+  MAX_NODE_MARKDOWN,
   MAX_NODES,
   type LayoutMode,
   type MindMapDocument,
@@ -86,6 +87,7 @@ function graphSignature(
       node.data.label,
       node.data.color,
       node.data.progress ?? null,
+      node.data.markdown ?? "",
     ]),
     edges: edges.map((edge) => [edge.id, edge.source, edge.target]),
   });
@@ -123,6 +125,7 @@ type MindMapState = {
   undo: () => void;
   redo: () => void;
   updateNodeLabel: (id: string, label: string) => void;
+  updateNodeMarkdown: (id: string, markdown: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
   updateNodeProgress: (id: string, progress: NodeProgress | undefined) => void;
   startEditing: (id: string, options?: { text?: string; selectAll?: boolean }) => void;
@@ -147,6 +150,7 @@ function toFlowNodes(nodes: PersistedNode[]): FlowNode[] {
       color: node.data.color,
       progress: node.data.progress,
       isRoot: node.data.isRoot,
+      markdown: node.data.markdown,
     },
   }));
 }
@@ -166,6 +170,17 @@ export function getFocusedNode(state: Pick<MindMapState, "nodes" | "lastSelected
     nodes.find((node) => node.id === lastSelectedId && node.selected) ??
     nodes.find((node) => node.selected) ??
     nodes.find((node) => node.data.isRoot)
+  );
+}
+
+/** Selected node for the notes pane — never falls back to the unselected root. */
+export function getSelectedEditNode(
+  state: Pick<MindMapState, "nodes" | "lastSelectedId">,
+): FlowNode | undefined {
+  const { nodes, lastSelectedId } = state;
+  return (
+    nodes.find((node) => node.id === lastSelectedId && node.selected) ??
+    nodes.find((node) => node.selected)
   );
 }
 
@@ -662,6 +677,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           label: node.data.label,
           color: node.data.color,
           progress: node.data.progress,
+          markdown: node.data.markdown,
         },
       };
     });
@@ -691,6 +707,26 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       nodes: get().nodes.map((node) =>
         node.id === id
           ? { ...node, data: { ...node.data, label } }
+          : node,
+      ),
+      saveStatus: "dirty",
+    });
+  },
+
+  updateNodeMarkdown: (id, markdown) => {
+    const next = markdown.slice(0, MAX_NODE_MARKDOWN);
+    const current = get().nodes.find((node) => node.id === id);
+    if (!current || (current.data.markdown ?? "") === next) return;
+    set({
+      nodes: get().nodes.map((node) =>
+        node.id === id
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                markdown: next.length > 0 ? next : undefined,
+              },
+            }
           : node,
       ),
       saveStatus: "dirty",
