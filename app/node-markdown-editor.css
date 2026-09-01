@@ -62,6 +62,17 @@
   margin: 0.2em 0;
 }
 
+.node-md-compose .w-md-editor-preview .wmde-markdown .task-list-item {
+  list-style: none;
+  cursor: pointer;
+}
+
+.node-md-compose .w-md-editor-preview .wmde-markdown .task-list-item input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--gold);
+  margin-right: 0.45em;
+}
+
 .node-md-compose .w-md-editor-preview .wmde-markdown a {
   color: var(--brand-green);
 }

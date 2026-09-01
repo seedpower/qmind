@@ -78,3 +78,34 @@ export function withTaskCommands(commands: ICommand[]) {
     return [command];
   });
 }
+
+const TASK_LINE = /^((?:\s*>\s*)*\s*(?:[-*+]|\d+\.)\s+)\[([ xX])\](.*)$/;
+const FENCE_LINE = /^\s*(`{3,}|~{3,})/;
+
+/** Toggle the Nth GFM task item in markdown; returns the original string if none match. */
+export function toggleTaskAtIndex(markdown: string, index: number) {
+  if (index < 0) return markdown;
+  let seen = 0;
+  let inFence = false;
+  const lines = markdown.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i] ?? "";
+    if (FENCE_LINE.test(line)) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    const match = line.match(TASK_LINE);
+    if (!match) continue;
+    if (seen !== index) {
+      seen += 1;
+      continue;
+    }
+    const prefix = match[1] ?? "";
+    const rest = match[3] ?? "";
+    const nextMark = match[2] === " " ? "x" : " ";
+    lines[i] = `${prefix}[${nextMark}]${rest}`;
+    return lines.join("\n");
+  }
+  return markdown;
+}
