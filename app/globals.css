@@ -428,6 +428,7 @@ a {
   border-radius: 999px;
   cursor: pointer;
   padding: 0;
+  box-shadow: 0 0 0 1px rgba(246, 241, 232, 0.28);
 }
 
 .color-dot.active {

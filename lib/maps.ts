@@ -5,8 +5,10 @@ import { getDb } from "@/lib/mongodb";
 import {
   MAX_NODES,
   DEFAULT_MAP_TITLE,
+  DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
   DEFAULT_ROOT_LABEL,
+  NODE_COLORS,
   type MindMapDocument,
   type MindMapSummary,
   isNodeProgress,
@@ -29,15 +31,7 @@ type MapRecord = {
 const DEFAULT_VIEWPORT: Viewport = { x: 0, y: 0, zoom: 1 };
 
 function isNodeColor(value: unknown): value is NodeColor {
-  return (
-    value === "amber" ||
-    value === "rose" ||
-    value === "teal" ||
-    value === "violet" ||
-    value === "sky" ||
-    value === "lime" ||
-    value === "stone"
-  );
+  return typeof value === "string" && value in NODE_COLORS;
 }
 
 function sanitizeNodes(input: unknown): PersistedNode[] {
@@ -60,7 +54,7 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
         position: { x: position.x, y: position.y },
         data: {
           label,
-          color: isNodeColor(data?.color) ? data.color : "stone",
+          color: isNodeColor(data?.color) ? data.color : DEFAULT_NODE_COLOR,
           progress: isNodeProgress(data?.progress) ? data.progress : undefined,
           isRoot: Boolean(data?.isRoot),
         },
@@ -146,7 +140,7 @@ export function createRootNode(label = DEFAULT_ROOT_LABEL): PersistedNode {
     id: "root",
     type: "mindmap",
     position: { x: 0, y: 0 },
-    data: { label, color: "amber", isRoot: true },
+    data: { label, color: DEFAULT_NODE_COLOR, isRoot: true },
   };
 }
 

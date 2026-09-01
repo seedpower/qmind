@@ -1,4 +1,5 @@
 export const NODE_COLORS = {
+  white: { bg: "#ffffff", border: "#d4cec4", text: "#2c2924" },
   amber: { bg: "#fff6e5", border: "#e8a838", text: "#7a4b00" },
   rose: { bg: "#fff0f1", border: "#e85d6c", text: "#8a2030" },
   teal: { bg: "#e9f8f5", border: "#2fafa3", text: "#0f5c55" },
@@ -10,8 +11,14 @@ export const NODE_COLORS = {
 
 export type NodeColor = keyof typeof NODE_COLORS;
 
+export const DEFAULT_NODE_COLOR: NodeColor = "white";
+
 export function getNodePalette(color: string | undefined) {
-  return NODE_COLORS[color as NodeColor] ?? NODE_COLORS.stone;
+  return NODE_COLORS[color as NodeColor] ?? NODE_COLORS[DEFAULT_NODE_COLOR];
+}
+
+export function getColorSwatch(color: NodeColor) {
+  return color === "white" ? NODE_COLORS.white.bg : NODE_COLORS[color].border;
 }
 
 export const COLOR_ORDER = Object.keys(NODE_COLORS) as NodeColor[];

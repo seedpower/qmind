@@ -3,11 +3,12 @@
 import { ClipboardPaste, Copy, GitBranch, Plus, Scissors, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { COLOR_ORDER, NODE_COLORS, type NodeColor } from "@/lib/types";
+import { COLOR_ORDER, getColorSwatch, type NodeColor } from "@/lib/types";
 import { useMindMapStore } from "@/store/useMindMapStore";
 import { ProgressPicker } from "./ProgressRing";
 
 const COLOR_LABELS: Record<NodeColor, string> = {
+  white: "White",
   amber: "Amber",
   rose: "Rose",
   teal: "Teal",
@@ -182,7 +183,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
             key={color}
             type="button"
             className={`color-dot ${sharedColor === color ? "active" : ""}`}
-            style={{ background: NODE_COLORS[color].border }}
+            style={{ background: getColorSwatch(color) }}
             title={COLOR_LABELS[color]}
             aria-label={COLOR_LABELS[color]}
             onClick={() => {

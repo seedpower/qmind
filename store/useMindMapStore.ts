@@ -32,7 +32,7 @@ import {
   type NodeClipboard,
 } from "@/lib/graph";
 import {
-  COLOR_ORDER,
+  DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
   MAX_NODES,
   type LayoutMode,
@@ -158,11 +158,6 @@ function toFlowEdges(edges: PersistedEdge[]): FlowEdge[] {
     target: edge.target,
     type: "mindmap",
   }));
-}
-
-function nextColor(parentColor: NodeColor): NodeColor {
-  const index = COLOR_ORDER.indexOf(parentColor);
-  return COLOR_ORDER[(index + 1) % COLOR_ORDER.length];
 }
 
 export function getFocusedNode(state: Pick<MindMapState, "nodes" | "lastSelectedId">): FlowNode | undefined {
@@ -575,7 +570,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       selected: true,
       data: {
         label: DEFAULT_NODE_LABEL,
-        color: nextColor(parent.data.color),
+        color: DEFAULT_NODE_COLOR,
         editing: true,
       },
     };

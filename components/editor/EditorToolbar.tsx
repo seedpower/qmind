@@ -18,7 +18,7 @@ import {
   Undo2,
 } from "lucide-react";
 import QMindMark from "@/components/brand/QMindMark";
-import { COLOR_ORDER, NODE_COLORS } from "@/lib/types";
+import { COLOR_ORDER, getColorSwatch } from "@/lib/types";
 import { getFocusedNode, useMindMapStore } from "@/store/useMindMapStore";
 import { ProgressPicker } from "./ProgressRing";
 
@@ -180,7 +180,7 @@ export default function EditorToolbar({ onHelp }: Props) {
               key={color}
               type="button"
               className={`color-dot ${sharedColor === color ? "active" : ""}`}
-              style={{ background: NODE_COLORS[color].border }}
+              style={{ background: getColorSwatch(color) }}
               title={
                 selectedNodes.length > 1
                   ? `Set ${color} on ${selectedNodes.length} nodes`
