@@ -16,9 +16,17 @@ export function getNodePalette(color: string | undefined) {
 
 export const COLOR_ORDER = Object.keys(NODE_COLORS) as NodeColor[];
 
+export const PROGRESS_STEPS = [0, 25, 50, 75, 100] as const;
+export type NodeProgress = (typeof PROGRESS_STEPS)[number];
+
+export function isNodeProgress(value: unknown): value is NodeProgress {
+  return (PROGRESS_STEPS as readonly number[]).includes(value as number);
+}
+
 export type MindMapNodeData = {
   label: string;
   color: NodeColor;
+  progress?: NodeProgress;
   isRoot?: boolean;
   editing?: boolean;
 };
@@ -30,6 +38,7 @@ export type PersistedNode = {
   data: {
     label: string;
     color: NodeColor;
+    progress?: NodeProgress;
     isRoot?: boolean;
   };
 };

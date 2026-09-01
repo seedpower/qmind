@@ -20,6 +20,7 @@ function serializeNodes(nodes: ReturnType<typeof useMindMapStore.getState>["node
     data: {
       label: node.data.label,
       color: node.data.color,
+      progress: node.data.progress,
       isRoot: node.data.isRoot,
     },
   }));

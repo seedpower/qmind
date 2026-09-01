@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { COLOR_ORDER, NODE_COLORS, type NodeColor } from "@/lib/types";
 import { useMindMapStore } from "@/store/useMindMapStore";
+import { ProgressPicker } from "./ProgressRing";
 
 const COLOR_LABELS: Record<NodeColor, string> = {
   amber: "琥珀",
@@ -30,6 +31,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const addSiblingNode = useMindMapStore((s) => s.addSiblingNode);
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
+  const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
 
   useLayoutEffect(() => {
     const el = menuRef.current;
@@ -117,6 +119,14 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
             }}
           />
         ))}
+      </div>
+      <div className="node-menu-sep" />
+      <div className="node-menu-label">进度</div>
+      <div className="node-menu-progress">
+        <ProgressPicker
+          value={node.data.progress}
+          onChange={(progress) => updateNodeProgress(nodeId, progress)}
+        />
       </div>
       <div className="node-menu-sep" />
       <button

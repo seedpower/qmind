@@ -4,6 +4,7 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useEffect, useRef } from "react";
 import { getNodePalette } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
+import { ProgressRing } from "./ProgressRing";
 
 export default function MindMapNode({
   id,
@@ -65,6 +66,9 @@ export default function MindMapNode({
       }}
     >
       <Handle type="target" position={Position.Left} className="mindmap-handle target" />
+      {data.progress != null ? (
+        <ProgressRing progress={data.progress} size={data.isRoot ? 18 : 16} />
+      ) : null}
       <div className="mindmap-text">
         <span className="mindmap-sizer" aria-hidden>
           {data.label || (data.editing ? " " : "新节点")}

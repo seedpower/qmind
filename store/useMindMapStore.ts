@@ -33,6 +33,7 @@ import {
   type MindMapDocument,
   type MindMapNodeData,
   type NodeColor,
+  type NodeProgress,
   type PersistedEdge,
   type PersistedNode,
 } from "@/lib/types";
@@ -67,6 +68,7 @@ type MindMapState = {
   addSiblingNode: (nodeId: string) => string | null;
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
+  updateNodeProgress: (id: string, progress: NodeProgress | undefined) => void;
   startEditing: (id: string) => void;
   finishEditing: (id: string) => void;
   deleteSelection: (nodeId?: string) => void;
@@ -87,6 +89,7 @@ function toFlowNodes(nodes: PersistedNode[]): FlowNode[] {
     data: {
       label: node.data.label,
       color: node.data.color,
+      progress: node.data.progress,
       isRoot: node.data.isRoot,
     },
   }));
@@ -427,6 +430,17 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       nodes: get().nodes.map((node) =>
         node.id === id
           ? { ...node, data: { ...node.data, color } }
+          : node,
+      ),
+      saveStatus: "dirty",
+    });
+  },
+
+  updateNodeProgress: (id, progress) => {
+    set({
+      nodes: get().nodes.map((node) =>
+        node.id === id
+          ? { ...node, data: { ...node.data, progress } }
           : node,
       ),
       saveStatus: "dirty",

@@ -6,6 +6,7 @@ import {
   MAX_NODES,
   type MindMapDocument,
   type MindMapSummary,
+  isNodeProgress,
   type NodeColor,
   type PersistedEdge,
   type PersistedNode,
@@ -57,6 +58,7 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
         data: {
           label,
           color: isNodeColor(data?.color) ? data.color : "stone",
+          progress: isNodeProgress(data?.progress) ? data.progress : undefined,
           isRoot: Boolean(data?.isRoot),
         },
       },

@@ -15,6 +15,7 @@ import {
 import QMindMark from "@/components/brand/QMindMark";
 import { COLOR_ORDER, NODE_COLORS } from "@/lib/types";
 import { getFocusedNode, useMindMapStore } from "@/store/useMindMapStore";
+import { ProgressPicker } from "./ProgressRing";
 
 type Props = {
   onHelp: () => void;
@@ -30,6 +31,7 @@ export default function EditorToolbar({ onHelp }: Props) {
   const autoLayout = useMindMapStore((s) => s.autoLayout);
   const layouting = useMindMapStore((s) => s.layouting);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
+  const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
 
   const selected = useMindMapStore(getFocusedNode);
   const canDelete = Boolean(selected && !selected.data.isRoot);
@@ -116,6 +118,11 @@ export default function EditorToolbar({ onHelp }: Props) {
             />
           ))}
         </div>
+        <ProgressPicker
+          value={selected?.data.progress}
+          disabled={!selected}
+          onChange={(progress) => selected && updateNodeProgress(selected.id, progress)}
+        />
       </div>
 
       <div className="toolbar-right">

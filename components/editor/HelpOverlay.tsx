@@ -37,7 +37,7 @@ export default function HelpOverlay({
           </li>
           <li>
             <kbd>右键节点</kbd>
-            <span>新建、删除、改颜色</span>
+            <span>新建、删除、改颜色和进度</span>
           </li>
           <li>
             <kbd>双击节点</kbd>

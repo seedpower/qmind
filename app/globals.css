@@ -384,7 +384,8 @@ a {
 
 .tool-btn:disabled,
 .icon-btn:disabled,
-.color-dot:disabled {
+.color-dot:disabled,
+.progress-dot:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
@@ -431,6 +432,97 @@ a {
 
 .color-dot.active {
   box-shadow: 0 0 0 2px var(--paper);
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding-left: 10px;
+  border-left: 1px solid var(--line);
+  color: var(--paper);
+}
+
+.progress-dot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+}
+
+.progress-dot.active {
+  box-shadow: 0 0 0 2px var(--paper);
+}
+
+.progress-none {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-radius: 999px;
+  opacity: 0.4;
+}
+
+.progress-none::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: 3.5px;
+  width: 12px;
+  height: 1.5px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
+
+.progress-ring {
+  display: block;
+  flex-shrink: 0;
+}
+
+.progress-ring-track {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  opacity: 0.28;
+}
+
+.progress-ring-value {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+
+.progress-ring-fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.progress-ring-check {
+  fill: none;
+  stroke: var(--ink-2);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.mindmap-node .progress-ring {
+  color: var(--node-border);
+}
+
+.mindmap-node .progress-ring-track {
+  opacity: 0.42;
+}
+
+.mindmap-node .progress-ring-check {
+  stroke: var(--node-bg);
 }
 
 .save-badge {
@@ -789,6 +881,16 @@ a {
   display: flex;
   gap: 7px;
   padding: 0 10px 6px;
+}
+
+.node-menu-progress {
+  padding: 0 6px 6px;
+}
+
+.node-menu-progress .progress-row {
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 
 @media (max-width: 900px) {
