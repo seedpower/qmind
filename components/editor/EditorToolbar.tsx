@@ -47,7 +47,14 @@ export default function EditorToolbar({ onHelp }: Props) {
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
 
   const selected = useMindMapStore(getFocusedNode);
-  const hasSelection = nodes.some((node) => node.selected);
+  const selectedNodes = nodes.filter((node) => node.selected);
+  const sharedColor =
+    selectedNodes.length === 0
+      ? selected?.data.color
+      : selectedNodes.every((node) => node.data.color === selectedNodes[0].data.color)
+        ? selectedNodes[0].data.color
+        : undefined;
+  const hasSelection = selectedNodes.length > 0;
   const canCut = nodes.some((node) => node.selected && !node.data.isRoot);
   const canDelete = Boolean(selected && !selected.data.isRoot);
 
@@ -172,9 +179,13 @@ export default function EditorToolbar({ onHelp }: Props) {
             <button
               key={color}
               type="button"
-              className={`color-dot ${selected?.data.color === color ? "active" : ""}`}
+              className={`color-dot ${sharedColor === color ? "active" : ""}`}
               style={{ background: NODE_COLORS[color].border }}
-              title={color}
+              title={
+                selectedNodes.length > 1
+                  ? `Set ${color} on ${selectedNodes.length} nodes`
+                  : color
+              }
               disabled={!selected}
               onClick={() => selected && updateNodeColor(selected.id, color)}
             />

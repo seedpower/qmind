@@ -703,12 +703,29 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   updateNodeColor: (id, color) => {
-    const current = get().nodes.find((node) => node.id === id);
-    if (!current || current.data.color === color) return;
+    const { nodes } = get();
+    const selectedIds = nodes
+      .filter((node) => node.selected)
+      .map((node) => node.id);
+    const ids =
+      selectedIds.length > 0 && selectedIds.includes(id)
+        ? selectedIds
+        : nodes.some((node) => node.id === id)
+          ? [id]
+          : [];
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    if (
+      nodes
+        .filter((node) => idSet.has(node.id))
+        .every((node) => node.data.color === color)
+    ) {
+      return;
+    }
     const history = recordHistory();
     set({
-      nodes: get().nodes.map((node) =>
-        node.id === id
+      nodes: nodes.map((node) =>
+        idSet.has(node.id)
           ? { ...node, data: { ...node.data, color } }
           : node,
       ),

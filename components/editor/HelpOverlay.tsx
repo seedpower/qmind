@@ -36,6 +36,10 @@ export default function HelpOverlay({
             <span>Add or remove from selection</span>
           </li>
           <li>
+            <kbd>Color dots</kbd>
+            <span>Recolor every selected node</span>
+          </li>
+          <li>
             <kbd>Right-click a node</kbd>
             <span>Create, delete, color, and progress</span>
           </li>

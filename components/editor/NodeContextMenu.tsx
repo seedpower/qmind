@@ -36,6 +36,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const canCut = useMindMapStore((s) =>
     s.nodes.some((item) => item.selected && !item.data.isRoot),
   );
+  const selectedNodes = useMindMapStore((s) => s.nodes.filter((item) => item.selected));
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
@@ -70,6 +71,13 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   if (!node) return null;
 
   const isRoot = Boolean(node.data.isRoot);
+  const colorTargets =
+    node.selected && selectedNodes.length > 0 ? selectedNodes : [node];
+  const sharedColor = colorTargets.every(
+    (item) => item.data.color === colorTargets[0].data.color,
+  )
+    ? colorTargets[0].data.color
+    : undefined;
 
   return createPortal(
     <div
@@ -153,13 +161,15 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         <kbd>⌘V</kbd>
       </button>
       <div className="node-menu-sep" />
-      <div className="node-menu-label">Color</div>
+      <div className="node-menu-label">
+        {colorTargets.length > 1 ? `Color (${colorTargets.length})` : "Color"}
+      </div>
       <div className="node-menu-colors" role="group" aria-label="Node color">
         {COLOR_ORDER.map((color) => (
           <button
             key={color}
             type="button"
-            className={`color-dot ${node.data.color === color ? "active" : ""}`}
+            className={`color-dot ${sharedColor === color ? "active" : ""}`}
             style={{ background: NODE_COLORS[color].border }}
             title={COLOR_LABELS[color]}
             aria-label={COLOR_LABELS[color]}
