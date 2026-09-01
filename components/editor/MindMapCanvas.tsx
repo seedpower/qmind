@@ -9,6 +9,7 @@ import {
   ReactFlow,
   ReactFlowProvider,
   SelectionMode,
+  useNodesInitialized,
   useReactFlow,
   type Connection,
   type OnConnectEnd,
@@ -25,14 +26,18 @@ const nodeTypes = { mindmap: MindMapNode };
 const edgeTypes = { mindmap: MindMapEdge };
 /** Keep click and drag thresholds aligned so a slightly shaky click still selects. */
 const NODE_POINTER_SLOP = 8;
+const FIT_VIEW_PADDING = 0.28;
 
 function FlowCanvas() {
   const connectingNodeId = useRef<string | null>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
+  const didInitialFit = useRef(false);
   const [spacePan, setSpacePan] = useState(false);
   const [menu, setMenu] = useState<{ nodeId: string; x: number; y: number } | null>(
     null,
   );
   const { screenToFlowPosition, fitView, getViewport, setCenter } = useReactFlow();
+  const nodesInitialized = useNodesInitialized();
   const {
     nodes,
     edges,
@@ -42,6 +47,7 @@ function FlowCanvas() {
     addChildNode,
     layoutTick,
     selectionNavTick,
+    mapId,
   } = useMindMapStore(
     useShallow((s) => ({
       nodes: s.nodes,
@@ -52,16 +58,65 @@ function FlowCanvas() {
       addChildNode: s.addChildNode,
       layoutTick: s.layoutTick,
       selectionNavTick: s.selectionNavTick,
+      mapId: s.mapId,
     })),
   );
+
+  const fitCanvas = useCallback(
+    (duration = 0) => {
+      if (useMindMapStore.getState().nodes.length === 0) return;
+      void fitView({ padding: FIT_VIEW_PADDING, duration });
+    },
+    [fitView],
+  );
+
+  useEffect(() => {
+    didInitialFit.current = false;
+  }, [mapId]);
+
+  useEffect(() => {
+    if (didInitialFit.current || !nodesInitialized) return;
+    if (useMindMapStore.getState().nodes.length === 0) return;
+    didInitialFit.current = true;
+    const frame = requestAnimationFrame(() => fitCanvas());
+    return () => cancelAnimationFrame(frame);
+  }, [nodesInitialized, mapId, fitCanvas]);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    let width = 0;
+    let height = 0;
+    let frame = 0;
+    const observer = new ResizeObserver((entries) => {
+      const next = entries[0]?.contentRect;
+      if (!next) return;
+      const nextWidth = Math.round(next.width);
+      const nextHeight = Math.round(next.height);
+      if (nextWidth < 8 || nextHeight < 8) return;
+      if (nextWidth === width && nextHeight === height) return;
+      width = nextWidth;
+      height = nextHeight;
+      if (!didInitialFit.current) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        frame = requestAnimationFrame(() => fitCanvas());
+      });
+    });
+    observer.observe(host);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [fitCanvas]);
 
   useEffect(() => {
     if (layoutTick === 0) return;
     const frame = requestAnimationFrame(() => {
-      void fitView({ padding: 0.28, duration: 280 });
+      fitCanvas(280);
     });
     return () => cancelAnimationFrame(frame);
-  }, [layoutTick, fitView]);
+  }, [layoutTick, fitCanvas]);
 
   useEffect(() => {
     if (selectionNavTick === 0) return;
@@ -196,7 +251,7 @@ function FlowCanvas() {
   );
 
   return (
-    <div className="canvas-host">
+    <div ref={hostRef} className="canvas-host">
       <ReactFlow
         className={spacePan ? "is-space-pan" : undefined}
         nodes={nodes}
@@ -214,7 +269,7 @@ function FlowCanvas() {
         connectionLineStyle={{ stroke: "#e8a838", strokeWidth: 2 }}
         defaultEdgeOptions={{ type: "mindmap" }}
         fitView
-        fitViewOptions={{ padding: 0.28 }}
+        fitViewOptions={{ padding: FIT_VIEW_PADDING }}
         onMoveEnd={(_, nextViewport) => {
           useMindMapStore.getState().setViewport(nextViewport);
         }}
