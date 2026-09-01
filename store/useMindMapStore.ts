@@ -9,6 +9,7 @@ import {
   type EdgeChange,
   type Node,
   type NodeChange,
+  type NodeDimensionChange,
   type NodePositionChange,
   type NodeSelectionChange,
   type Viewport,
@@ -138,6 +139,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   let pending: GraphSnapshot | null = null;
   let gen = 0;
   let flushPromise: Promise<void> | null = null;
+  const awaitingMeasure = new Set<string>();
 
   const graphNow = () =>
     pending ?? { nodes: get().nodes, edges: get().edges };
@@ -341,6 +343,18 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     });
     if (reordered) {
       commitGraph(reordered.nodes, reordered.edges);
+    } else {
+      const measuredIds = changes
+        .filter(
+          (change): change is NodeDimensionChange =>
+            change.type === "dimensions" && Boolean(change.dimensions),
+        )
+        .map((change) => change.id)
+        .filter((id) => awaitingMeasure.has(id));
+      if (measuredIds.length > 0) {
+        for (const id of measuredIds) awaitingMeasure.delete(id);
+        commitGraph(nextNodes, edges);
+      }
     }
   },
 
@@ -406,6 +420,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       ),
     );
     set({ lastSelectedId: id });
+    awaitingMeasure.add(id);
     return id;
   },
 

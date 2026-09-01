@@ -7,7 +7,7 @@ type LayoutableNode = {
   width?: number;
   height?: number;
   measured?: { width?: number; height?: number };
-  data: { label: string; isRoot?: boolean };
+  data: { label: string; isRoot?: boolean; progress?: number };
 };
 
 type LayoutableEdge = {
@@ -17,6 +17,39 @@ type LayoutableEdge = {
 };
 
 const elk = new ELK();
+
+const NODE_MIN_WIDTH = { root: 168, node: 128 };
+const NODE_PAD_X = { root: 32, node: 24 };
+const NODE_FONT = { root: 18, node: 14 };
+const NODE_HEIGHT = { root: 52, node: 40 };
+const PROGRESS_EXTRA = 22;
+
+function isWideGlyph(code: number) {
+  return (
+    (code >= 0x1100 && code <= 0x11ff) ||
+    (code >= 0x2e80 && code <= 0xa4cf) ||
+    (code >= 0xac00 && code <= 0xd7af) ||
+    (code >= 0xf900 && code <= 0xfaff) ||
+    (code >= 0xfe10 && code <= 0xfe1f) ||
+    (code >= 0xff00 && code <= 0xff60) ||
+    (code >= 0xffe0 && code <= 0xffe6)
+  );
+}
+
+function estimateLabelWidth(label: string, fontSize: number) {
+  let width = 0;
+  for (const char of label) {
+    const code = char.codePointAt(0) ?? 0;
+    if (isWideGlyph(code)) {
+      width += fontSize;
+    } else if (char === " ") {
+      width += fontSize * 0.32;
+    } else {
+      width += fontSize * 0.62;
+    }
+  }
+  return width;
+}
 
 function optionsFor(mode: LayoutMode): Record<string, string> {
   if (mode === "RADIAL") {
@@ -49,13 +82,16 @@ function measureNode(node: LayoutableNode): { width: number; height: number } {
     return { width: measuredWidth, height: measuredHeight };
   }
 
-  const label = node.data.label ?? "";
-  const padding = node.data.isRoot ? 56 : 48;
+  const isRoot = Boolean(node.data.isRoot);
+  const fontSize = isRoot ? NODE_FONT.root : NODE_FONT.node;
+  const paddingX = isRoot ? NODE_PAD_X.root : NODE_PAD_X.node;
+  const minWidth = isRoot ? NODE_MIN_WIDTH.root : NODE_MIN_WIDTH.node;
+  const progress = node.data.progress != null ? PROGRESS_EXTRA : 0;
   const width = Math.max(
-    node.data.isRoot ? 168 : 128,
-    Math.min(320, padding + label.length * 13),
+    minWidth,
+    Math.min(320, paddingX + progress + estimateLabelWidth(node.data.label ?? "", fontSize)),
   );
-  const height = node.data.isRoot ? 52 : 40;
+  const height = isRoot ? NODE_HEIGHT.root : NODE_HEIGHT.node;
   return { width, height };
 }
 
