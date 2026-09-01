@@ -36,7 +36,23 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const canCut = useMindMapStore((s) =>
     s.nodes.some((item) => item.selected && !item.data.isRoot),
   );
-  const selectedNodes = useMindMapStore((s) => s.nodes.filter((item) => item.selected));
+  const selectedCount = useMindMapStore(
+    (s) => s.nodes.reduce((count, item) => count + (item.selected ? 1 : 0), 0),
+  );
+  const selectedSharedColor = useMindMapStore((s) => {
+    let color: NodeColor | undefined;
+    let seen = false;
+    for (const item of s.nodes) {
+      if (!item.selected) continue;
+      if (!seen) {
+        color = item.data.color;
+        seen = true;
+        continue;
+      }
+      if (item.data.color !== color) return undefined;
+    }
+    return seen ? color : undefined;
+  });
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
@@ -71,13 +87,9 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   if (!node) return null;
 
   const isRoot = Boolean(node.data.isRoot);
-  const colorTargets =
-    node.selected && selectedNodes.length > 0 ? selectedNodes : [node];
-  const sharedColor = colorTargets.every(
-    (item) => item.data.color === colorTargets[0].data.color,
-  )
-    ? colorTargets[0].data.color
-    : undefined;
+  const colorCount = node.selected && selectedCount > 0 ? selectedCount : 1;
+  const sharedColor =
+    node.selected && selectedCount > 1 ? selectedSharedColor : node.data.color;
 
   return createPortal(
     <div
@@ -162,7 +174,7 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
       </button>
       <div className="node-menu-sep" />
       <div className="node-menu-label">
-        {colorTargets.length > 1 ? `Color (${colorTargets.length})` : "Color"}
+        {colorCount > 1 ? `Color (${colorCount})` : "Color"}
       </div>
       <div className="node-menu-colors" role="group" aria-label="Node color">
         {COLOR_ORDER.map((color) => (
