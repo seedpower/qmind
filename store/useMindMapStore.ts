@@ -19,6 +19,8 @@ import { layoutWithElk } from "@/lib/elk-layout";
 import {
   getDescendantIds,
   getParentId,
+  insertAfterId,
+  insertChildEdgeAfter,
   pickFocusAfterDelete,
   pickNodeInDirection,
   reorderSiblingsByPosition,
@@ -61,7 +63,7 @@ type MindMapState = {
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange<FlowEdge>[]) => void;
   onConnect: (connection: Connection) => void;
-  addChildNode: (parentId: string, position?: { x: number; y: number }) => string | null;
+  addChildNode: (parentId: string, position?: { x: number; y: number }, afterId?: string) => string | null;
   addSiblingNode: (nodeId: string) => string | null;
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
@@ -361,15 +363,16 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     });
   },
 
-  addChildNode: (parentId) => {
+  addChildNode: (parentId, position, afterId) => {
     const parent = graphNow().nodes.find((node) => node.id === parentId);
     if (!parent) return null;
     const { nodes, edges } = graphNow();
+    const afterNode = afterId ? nodes.find((node) => node.id === afterId) : undefined;
     const id = nanoid(10);
     const child: FlowNode = {
       id,
       type: "mindmap",
-      position: parent.position,
+      position: position ?? afterNode?.position ?? parent.position,
       selected: true,
       data: {
         label: "新节点",
@@ -378,23 +381,25 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       },
     };
     commitGraph(
-      [
-        ...nodes.map((node) => ({
+      insertAfterId(
+        nodes.map((node) => ({
           ...node,
           selected: false,
           data: { ...node.data, editing: false },
         })),
         child,
-      ],
-      [
-        ...edges,
+        afterId,
+      ),
+      insertChildEdgeAfter(
+        edges,
         {
           id: `e-${parentId}-${id}`,
           source: parentId,
           target: id,
           type: "mindmap",
         },
-      ],
+        afterId,
+      ),
     );
     set({ lastSelectedId: id });
     return id;
@@ -403,7 +408,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   addSiblingNode: (nodeId) => {
     const parentId = getParentId(nodeId, graphNow().edges);
     if (!parentId) return get().addChildNode(nodeId);
-    return get().addChildNode(parentId);
+    return get().addChildNode(parentId, undefined, nodeId);
   },
 
   updateNodeLabel: (id, label) => {

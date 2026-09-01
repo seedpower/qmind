@@ -61,7 +61,7 @@ export default function HelpOverlay({
           </li>
           <li>
             <kbd>Enter</kbd>
-            <span>添加同级节点，随后自动排版</span>
+            <span>在选中节点下方添加同级，随后自动排版</span>
           </li>
           <li>
             <kbd>Delete</kbd>

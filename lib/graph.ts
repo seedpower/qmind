@@ -38,6 +38,30 @@ export function getChildIds(
     .map((edge) => edge.target);
 }
 
+export function insertAfterId<T extends { id: string }>(
+  items: T[],
+  item: T,
+  afterId?: string | null,
+): T[] {
+  if (!afterId) return [...items, item];
+  const index = items.findIndex((entry) => entry.id === afterId);
+  if (index < 0) return [...items, item];
+  return [...items.slice(0, index + 1), item, ...items.slice(index + 1)];
+}
+
+export function insertChildEdgeAfter<E extends { source: string; target: string }>(
+  edges: E[],
+  edge: E,
+  afterTargetId?: string | null,
+): E[] {
+  if (!afterTargetId) return [...edges, edge];
+  const index = edges.findIndex(
+    (entry) => entry.source === edge.source && entry.target === afterTargetId,
+  );
+  if (index < 0) return [...edges, edge];
+  return [...edges.slice(0, index + 1), edge, ...edges.slice(index + 1)];
+}
+
 export type NavDirection = "ArrowUp" | "ArrowDown" | "ArrowLeft" | "ArrowRight";
 
 const NAV_AXIS: Record<NavDirection, { x: number; y: number }> = {
