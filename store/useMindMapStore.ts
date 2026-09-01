@@ -62,7 +62,7 @@ function cloneHistoryNodes(nodes: FlowNode[]): FlowNode[] {
   return nodes.map((node) => ({
     ...node,
     position: { ...node.position },
-    data: { ...node.data, editing: false },
+    data: { ...node.data, editing: false, editSelectAll: undefined },
     selected: Boolean(node.selected),
     dragging: false,
   }));
@@ -125,7 +125,7 @@ type MindMapState = {
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
   updateNodeProgress: (id: string, progress: NodeProgress | undefined) => void;
-  startEditing: (id: string) => void;
+  startEditing: (id: string, options?: { text?: string; selectAll?: boolean }) => void;
   finishEditing: (id: string) => void;
   deleteSelection: (nodeId?: string) => void;
   layouting: boolean;
@@ -732,15 +732,28 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     });
   },
 
-  startEditing: (id) => {
+  startEditing: (id, options) => {
     const current = get().nodes.find((node) => node.id === id);
-    labelBaseline = current ? { id, label: current.data.label } : null;
+    if (!current) return;
+    if (!current.data.editing) {
+      labelBaseline = { id, label: current.data.label };
+    }
+    const selectAll = options?.selectAll ?? options?.text === undefined;
+    const nextLabel =
+      options?.text !== undefined
+        ? options.text.slice(0, 200)
+        : current.data.label;
     set({
       lastSelectedId: id,
       nodes: get().nodes.map((node) => ({
         ...node,
         selected: node.id === id,
-        data: { ...node.data, editing: node.id === id },
+        data: {
+          ...node.data,
+          editing: node.id === id,
+          editSelectAll: node.id === id ? selectAll : undefined,
+          label: node.id === id ? nextLabel : node.data.label,
+        },
       })),
     });
   },
@@ -770,7 +783,12 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         if (item.id !== id) return item;
         return {
           ...item,
-          data: { ...item.data, label: nextLabel, editing: false },
+          data: {
+            ...item.data,
+            label: nextLabel,
+            editing: false,
+            editSelectAll: undefined,
+          },
         };
       }),
       saveStatus: "dirty",

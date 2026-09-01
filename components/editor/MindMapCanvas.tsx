@@ -89,6 +89,12 @@ function FlowCanvas() {
   useEffect(() => {
     function isTypingTarget(target: EventTarget | null) {
       if (!(target instanceof HTMLElement)) return false;
+      if (
+        target.classList.contains("mindmap-input") &&
+        !useMindMapStore.getState().nodes.some((node) => node.data.editing)
+      ) {
+        return false;
+      }
       return (
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||

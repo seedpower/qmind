@@ -40,8 +40,12 @@ export default function HelpOverlay({
             <span>Create, delete, color, and progress</span>
           </li>
           <li>
-            <kbd>Double-click a node</kbd>
-            <span>Edit the label</span>
+            <kbd>Type</kbd>
+            <span>Replace the selected node's label</span>
+          </li>
+          <li>
+            <kbd>F2</kbd>
+            <span>Edit the label in place; double-click does the same</span>
           </li>
           <li>
             <kbd>Drag to empty space</kbd>
@@ -86,10 +90,6 @@ export default function HelpOverlay({
           <li>
             <kbd>⌘ / Ctrl + Shift + Z</kbd>
             <span>Redo; Ctrl + Y on Windows</span>
-          </li>
-          <li>
-            <kbd>L</kbd>
-            <span>ELK layout to the right; Shift+L for radial</span>
           </li>
           <li>
             <kbd>⌘ / Ctrl + S</kbd>

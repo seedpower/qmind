@@ -29,6 +29,7 @@ export type MindMapNodeData = {
   progress?: NodeProgress;
   isRoot?: boolean;
   editing?: boolean;
+  editSelectAll?: boolean;
 };
 
 export type PersistedNode = {

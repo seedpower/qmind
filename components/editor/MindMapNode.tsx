@@ -1,7 +1,7 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { DEFAULT_NODE_LABEL, getNodePalette } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 import { ProgressRing } from "./ProgressRing";
@@ -18,12 +18,29 @@ export default function MindMapNode({
   const addChildNode = useMindMapStore((s) => s.addChildNode);
   const focused = useMindMapStore((s) => s.lastSelectedId === id);
   const { bg, border, text } = getNodePalette(data.color);
+  const liveInput = Boolean(data.editing || (selected && focused));
 
-  useEffect(() => {
-    if (!data.editing) return;
-    inputRef.current?.focus();
-    inputRef.current?.select();
-  }, [data.editing]);
+  useLayoutEffect(() => {
+    if (!liveInput) return;
+    const input = inputRef.current;
+    if (!input) return;
+    const active = document.activeElement;
+    if (
+      active &&
+      active !== document.body &&
+      active !== input &&
+      !(
+        active instanceof HTMLElement &&
+        active.closest(".react-flow, .canvas-host, .editor-canvas")
+      )
+    ) {
+      return;
+    }
+    input.focus({ preventScroll: true });
+    if (data.editing && data.editSelectAll !== false) {
+      input.select();
+    }
+  }, [liveInput, data.editing, data.editSelectAll]);
 
   return (
     <div
@@ -71,16 +88,22 @@ export default function MindMapNode({
       ) : null}
       <div className="mindmap-text">
         <span className="mindmap-sizer" aria-hidden>
-          {data.label || (data.editing ? " " : DEFAULT_NODE_LABEL)}
+          {data.label || (liveInput ? " " : DEFAULT_NODE_LABEL)}
         </span>
-        {data.editing ? (
+        {liveInput ? (
           <input
             ref={inputRef}
-            className="mindmap-input nodrag nopan"
+            className={`mindmap-input nodrag nopan ${data.editing ? "is-editing" : ""}`}
             value={data.label}
             size={1}
             maxLength={200}
-            onChange={(event) => updateNodeLabel(id, event.target.value)}
+            onChange={(event) => {
+              if (!data.editing) startEditing(id, { selectAll: false });
+              updateNodeLabel(id, event.target.value);
+            }}
+            onCompositionStart={() => {
+              if (!data.editing) startEditing(id, { selectAll: false });
+            }}
             onBlur={() => {
               window.setTimeout(() => {
                 if (document.activeElement !== inputRef.current) {
@@ -89,6 +112,7 @@ export default function MindMapNode({
               }, 0);
             }}
             onKeyDown={(event) => {
+              if (!data.editing) return;
               event.stopPropagation();
               if (event.key === "Enter" && !event.nativeEvent.isComposing) {
                 event.currentTarget.blur();

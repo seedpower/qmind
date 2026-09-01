@@ -719,6 +719,11 @@ a {
   outline: none;
   cursor: text;
   field-sizing: content;
+  caret-color: transparent;
+}
+
+.mindmap-input.is-editing {
+  caret-color: var(--node-text);
 }
 
 .mindmap-node.is-root .mindmap-sizer,

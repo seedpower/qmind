@@ -86,10 +86,15 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
+      const nodeEditing = useMindMapStore
+        .getState()
+        .nodes.some((node) => node.data.editing);
+      const inMindmapInput = target?.classList.contains("mindmap-input");
       const typing =
-        target?.tagName === "INPUT" ||
-        target?.tagName === "TEXTAREA" ||
-        target?.isContentEditable;
+        (target?.tagName === "INPUT" ||
+          target?.tagName === "TEXTAREA" ||
+          target?.isContentEditable) &&
+        !(inMindmapInput && !nodeEditing);
 
       if (event.metaKey || event.ctrlKey) {
         const key = event.key.toLowerCase();
@@ -167,9 +172,19 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
       } else if (event.key === "Backspace" || event.key === "Delete") {
         event.preventDefault();
         state.deleteSelection();
-      } else if (event.key.toLowerCase() === "l") {
+      } else if (event.key === "F2") {
+        if (!selected.selected) return;
         event.preventDefault();
-        void state.autoLayout(event.shiftKey ? "RADIAL" : "RIGHT");
+        state.startEditing(selected.id);
+      } else if (event.isComposing || event.key === "Process") {
+        if (!selected.selected) return;
+        if (!selected.data.editing) {
+          state.startEditing(selected.id, { selectAll: false });
+        }
+      } else if (event.key.length === 1 && event.key !== " ") {
+        if (!selected.selected) return;
+        event.preventDefault();
+        state.startEditing(selected.id, { text: event.key });
       }
     }
 
