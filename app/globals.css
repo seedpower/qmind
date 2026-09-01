@@ -704,6 +704,8 @@ html.editor-resizing-stacked * {
 }
 
 .mindmap-controls {
+  left: 167px !important;
+  bottom: 15px !important;
   border: 1px solid var(--line) !important;
   border-radius: 12px !important;
   overflow: hidden;
@@ -711,10 +713,19 @@ html.editor-resizing-stacked * {
 }
 
 .mindmap-minimap {
+  left: 15px !important;
+  bottom: 15px !important;
+  top: auto !important;
+  transform: none;
   border: 1px solid var(--line) !important;
   border-radius: 14px !important;
   overflow: hidden;
   background: var(--ink-2) !important;
+}
+
+.mindmap-minimap svg {
+  width: 140px;
+  height: 105px;
 }
 
 .react-flow {

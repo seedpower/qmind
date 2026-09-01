@@ -243,7 +243,7 @@ function FlowCanvas() {
         nodesFocusable={false}
         edgesFocusable={false}
         disableKeyboardA11y
-        proOptions={{ hideAttribution: false }}
+        proOptions={{ hideAttribution: true }}
       >
         <Background
           id="dots"
@@ -258,12 +258,13 @@ function FlowCanvas() {
           className="mindmap-controls"
         />
         <MiniMap
-          position="bottom-right"
+          position="bottom-left"
           pannable
           zoomable
           nodeColor={(node) => getNodePalette((node as FlowNode).data?.color).border}
           maskColor="rgba(12, 14, 18, 0.7)"
           className="mindmap-minimap"
+          style={{ width: 140, height: 105 }}
         />
       </ReactFlow>
       {menu ? (
