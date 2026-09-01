@@ -1,4 +1,4 @@
-const INDENT = "  ";
+const INDENT = "\t";
 
 function selectedBlock(text: string, start: number, end: number) {
   const from = text.lastIndexOf("\n", start - 1) + 1;
@@ -14,7 +14,7 @@ function selectedBlock(text: string, start: number, end: number) {
 
 function unindentLine(line: string) {
   if (line.startsWith("\t")) return { line: line.slice(1), removed: 1 };
-  if (line.startsWith(INDENT)) return { line: line.slice(INDENT.length), removed: INDENT.length };
+  if (line.startsWith("  ")) return { line: line.slice(2), removed: 2 };
   if (line.startsWith(" ")) return { line: line.slice(1), removed: 1 };
   return { line, removed: 0 };
 }
