@@ -1,4 +1,112 @@
-import type { LayoutMode } from "@/lib/types";
+import type { LayoutMode, NodeColor, NodeProgress } from "@/lib/types";
+
+export type NodeClipboard = {
+  nodes: {
+    id: string;
+    position: { x: number; y: number };
+    data: {
+      label: string;
+      color: NodeColor;
+      progress?: NodeProgress;
+    };
+  }[];
+  edges: { source: string; target: string }[];
+  rootIds: string[];
+};
+
+type ClipboardSourceNode = {
+  id: string;
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    color: NodeColor;
+    progress?: NodeProgress;
+  };
+};
+
+/** Copy selected nodes plus their descendants, collapsing nested selections into a forest. */
+export function collectNodeClipboard(
+  selectedIds: Iterable<string>,
+  nodes: ClipboardSourceNode[],
+  edges: { source: string; target: string }[],
+): NodeClipboard | null {
+  const selectedSet = new Set(selectedIds);
+  const knownIds = new Set(nodes.map((node) => node.id));
+  const copyIds = new Set<string>();
+  for (const id of selectedSet) {
+    if (!knownIds.has(id)) continue;
+    copyIds.add(id);
+    for (const descendantId of getDescendantIds(id, edges)) {
+      copyIds.add(descendantId);
+    }
+  }
+  if (copyIds.size === 0) return null;
+
+  const rootIds = nodes
+    .map((node) => node.id)
+    .filter((id) => {
+      if (!selectedSet.has(id) || !copyIds.has(id)) return false;
+      const parentId = getParentId(id, edges);
+      return !parentId || !copyIds.has(parentId);
+    });
+  if (rootIds.length === 0) return null;
+
+  return {
+    nodes: nodes
+      .filter((node) => copyIds.has(node.id))
+      .map((node) => ({
+        id: node.id,
+        position: { ...node.position },
+        data: {
+          label: node.data.label,
+          color: node.data.color,
+          progress: node.data.progress,
+        },
+      })),
+    edges: edges
+      .filter((edge) => copyIds.has(edge.source) && copyIds.has(edge.target))
+      .map((edge) => ({ source: edge.source, target: edge.target })),
+    rootIds,
+  };
+}
+
+export function cloneClipboardOnto(
+  clipboard: NodeClipboard,
+  parentId: string,
+  makeId: () => string,
+): {
+  nodes: NodeClipboard["nodes"];
+  edges: { id: string; source: string; target: string }[];
+  rootIds: string[];
+} {
+  const idMap = new Map<string, string>();
+  for (const node of clipboard.nodes) {
+    idMap.set(node.id, makeId());
+  }
+
+  const mappedId = (id: string) => idMap.get(id)!;
+
+  return {
+    nodes: clipboard.nodes.map((node) => ({
+      id: mappedId(node.id),
+      position: { ...node.position },
+      data: { ...node.data },
+    })),
+    edges: [
+      ...clipboard.edges.map((edge) => ({
+        id: `e-${mappedId(edge.source)}-${mappedId(edge.target)}`,
+        source: mappedId(edge.source),
+        target: mappedId(edge.target),
+      })),
+      ...clipboard.rootIds.map((id) => ({
+        id: `e-${parentId}-${mappedId(id)}`,
+        source: parentId,
+        target: mappedId(id),
+      })),
+    ],
+    rootIds: clipboard.rootIds.map(mappedId),
+  };
+}
 
 export function getDescendantIds(
   nodeId: string,

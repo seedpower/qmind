@@ -91,9 +91,38 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
         target?.tagName === "TEXTAREA" ||
         target?.isContentEditable;
 
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s") {
-        event.preventDefault();
-        void persist();
+      if (event.metaKey || event.ctrlKey) {
+        const key = event.key.toLowerCase();
+        if (key === "s") {
+          event.preventDefault();
+          void persist();
+          return;
+        }
+        if (typing || helpOpen) return;
+        if (key === "z") {
+          event.preventDefault();
+          if (event.shiftKey) {
+            useMindMapStore.getState().redo();
+          } else {
+            useMindMapStore.getState().undo();
+          }
+          return;
+        }
+        if (key === "y") {
+          event.preventDefault();
+          useMindMapStore.getState().redo();
+          return;
+        }
+        if (key === "c") {
+          event.preventDefault();
+          useMindMapStore.getState().copySelection();
+          return;
+        }
+        if (key === "v") {
+          event.preventDefault();
+          useMindMapStore.getState().pasteOntoSelection();
+          return;
+        }
         return;
       }
 
@@ -110,7 +139,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
       }
 
       if (typing || helpOpen) return;
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.altKey) return;
 
       const state = useMindMapStore.getState();
       const selected = getFocusedNode(state);

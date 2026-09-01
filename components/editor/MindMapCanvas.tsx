@@ -171,13 +171,19 @@ function FlowCanvas() {
   const handleNodeContextMenu = useCallback(
     (event: ReactMouseEvent, node: FlowNode) => {
       event.preventDefault();
-      useMindMapStore.setState((state) => ({
-        lastSelectedId: node.id,
-        nodes: state.nodes.map((item) => ({
-          ...item,
-          selected: item.id === node.id,
-        })),
-      }));
+      useMindMapStore.setState((state) => {
+        const current = state.nodes.find((item) => item.id === node.id);
+        if (current?.selected) {
+          return { lastSelectedId: node.id };
+        }
+        return {
+          lastSelectedId: node.id,
+          nodes: state.nodes.map((item) => ({
+            ...item,
+            selected: item.id === node.id,
+          })),
+        };
+      });
       setMenu({ nodeId: node.id, x: event.clientX, y: event.clientY });
     },
     [],

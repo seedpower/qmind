@@ -18,6 +18,8 @@ import { nanoid } from "nanoid";
 import { create } from "zustand";
 import { layoutWithElk } from "@/lib/elk-layout";
 import {
+  cloneClipboardOnto,
+  collectNodeClipboard,
   getDescendantIds,
   getParentId,
   insertAfterId,
@@ -27,10 +29,12 @@ import {
   reorderSiblingsByPosition,
   wouldCreateCycle,
   type NavDirection,
+  type NodeClipboard,
 } from "@/lib/graph";
 import {
   COLOR_ORDER,
   DEFAULT_NODE_LABEL,
+  MAX_NODES,
   type LayoutMode,
   type MindMapDocument,
   type MindMapNodeData,
@@ -45,6 +49,48 @@ export type FlowEdge = Edge;
 
 export type SaveStatus = "idle" | "dirty" | "saving" | "saved" | "error";
 
+const HISTORY_LIMIT = 50;
+
+type HistoryEntry = {
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+  layoutMode: LayoutMode;
+  lastSelectedId: string | null;
+};
+
+function cloneHistoryNodes(nodes: FlowNode[]): FlowNode[] {
+  return nodes.map((node) => ({
+    ...node,
+    position: { ...node.position },
+    data: { ...node.data, editing: false },
+    selected: Boolean(node.selected),
+    dragging: false,
+  }));
+}
+
+function cloneHistoryEdges(edges: FlowEdge[]): FlowEdge[] {
+  return edges.map((edge) => ({ ...edge }));
+}
+
+function graphSignature(
+  nodes: FlowNode[],
+  edges: FlowEdge[],
+  layoutMode: LayoutMode,
+) {
+  return JSON.stringify({
+    layoutMode,
+    nodes: nodes.map((node) => [
+      node.id,
+      node.position.x,
+      node.position.y,
+      node.data.label,
+      node.data.color,
+      node.data.progress ?? null,
+    ]),
+    edges: edges.map((edge) => [edge.id, edge.source, edge.target]),
+  });
+}
+
 type MindMapState = {
   mapId: string;
   title: string;
@@ -55,6 +101,7 @@ type MindMapState = {
   hydrated: boolean;
   lastSelectedId: string | null;
   selectionNavTick: number;
+  clipboard: NodeClipboard | null;
   hydrate: (map: MindMapDocument) => void;
   setTitle: (title: string) => void;
   setViewport: (viewport: Viewport) => void;
@@ -68,6 +115,12 @@ type MindMapState = {
   onConnect: (connection: Connection) => void;
   addChildNode: (parentId: string, position?: { x: number; y: number }, afterId?: string) => string | null;
   addSiblingNode: (nodeId: string) => string | null;
+  copySelection: () => void;
+  pasteOntoSelection: (parentId?: string) => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
   updateNodeProgress: (id: string, progress: NodeProgress | undefined) => void;
@@ -140,9 +193,52 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   let gen = 0;
   let flushPromise: Promise<void> | null = null;
   const awaitingMeasure = new Set<string>();
+  let past: HistoryEntry[] = [];
+  let future: HistoryEntry[] = [];
+  let dragOrigin: HistoryEntry | null = null;
+  let labelBaseline: { id: string; label: string } | null = null;
 
   const graphNow = () =>
     pending ?? { nodes: get().nodes, edges: get().edges };
+
+  const capture = (): HistoryEntry => {
+    const { layoutMode, lastSelectedId } = get();
+    const { nodes, edges } = graphNow();
+    return {
+      nodes: cloneHistoryNodes(nodes),
+      edges: cloneHistoryEdges(edges),
+      layoutMode,
+      lastSelectedId,
+    };
+  };
+
+  const recordHistory = () => {
+    if (!get().hydrated) {
+      return { canUndo: past.length > 0, canRedo: future.length > 0 };
+    }
+    past.push(capture());
+    if (past.length > HISTORY_LIMIT) past.shift();
+    future = [];
+    return { canUndo: true, canRedo: false };
+  };
+
+  const applyHistory = (entry: HistoryEntry) => {
+    pending = null;
+    gen += 1;
+    awaitingMeasure.clear();
+    dragOrigin = null;
+    labelBaseline = null;
+    set({
+      nodes: cloneHistoryNodes(entry.nodes),
+      edges: cloneHistoryEdges(entry.edges),
+      layoutMode: entry.layoutMode,
+      lastSelectedId: entry.lastSelectedId,
+      saveStatus: get().hydrated ? "dirty" : get().saveStatus,
+      layouting: false,
+      canUndo: past.length > 0,
+      canRedo: future.length > 0,
+    });
+  };
 
   const flushPendingLayout = () => {
     if (flushPromise) return flushPromise;
@@ -202,11 +298,21 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   hydrated: false,
   lastSelectedId: null,
   selectionNavTick: 0,
+  clipboard: null,
+  canUndo: false,
+  canRedo: false,
   layouting: false,
   layoutTick: 0,
   layoutMode: "RIGHT",
 
   hydrate: (map) => {
+    pending = null;
+    gen += 1;
+    awaitingMeasure.clear();
+    past = [];
+    future = [];
+    dragOrigin = null;
+    labelBaseline = null;
     const nodes = toFlowNodes(map.nodes);
     set({
       mapId: map.id,
@@ -221,6 +327,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         nodes.find((node) => node.data.isRoot)?.id ??
         nodes[0]?.id ??
         null,
+      canUndo: false,
+      canRedo: false,
     });
   },
 
@@ -281,6 +389,15 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
 
   onNodesChange: (changes) => {
     const { nodes, edges, hydrated } = get();
+    if (
+      !dragOrigin &&
+      changes.some(
+        (change): change is NodePositionChange =>
+          change.type === "position" && change.dragging === true,
+      )
+    ) {
+      dragOrigin = capture();
+    }
     const moving = new Set(
       changes
         .filter((change): change is NodePositionChange => change.type === "position")
@@ -335,11 +452,36 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           )
         : null;
 
-    set({
+    const nextGraph = {
       nodes: reordered?.nodes ?? nextNodes,
       edges: reordered?.edges ?? edges,
+    };
+    const history =
+      dragEnded && dragOrigin
+        ? (() => {
+            const origin = dragOrigin;
+            dragOrigin = null;
+            if (
+              !hydrated ||
+              graphSignature(origin.nodes, origin.edges, origin.layoutMode) ===
+                graphSignature(nextGraph.nodes, nextGraph.edges, get().layoutMode)
+            ) {
+              return {};
+            }
+            past.push(origin);
+            if (past.length > HISTORY_LIMIT) past.shift();
+            future = [];
+            return { canUndo: true, canRedo: false };
+          })()
+        : {};
+    if (dragEnded) dragOrigin = null;
+
+    set({
+      nodes: nextGraph.nodes,
+      edges: nextGraph.edges,
       lastSelectedId,
       saveStatus: hydrated && (dragEnded || removed || reordered) ? "dirty" : get().saveStatus,
+      ...history,
     });
     if (reordered) {
       commitGraph(reordered.nodes, reordered.edges);
@@ -359,11 +501,13 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   onEdgesChange: (changes) => {
-    const nextEdges = applyEdgeChanges(changes, get().edges);
     const removed = changes.some((change) => change.type === "remove");
+    const history = removed ? recordHistory() : {};
+    const nextEdges = applyEdgeChanges(changes, get().edges);
     set({
       edges: nextEdges,
       saveStatus: get().hydrated && removed ? "dirty" : get().saveStatus,
+      ...history,
     });
   },
 
@@ -372,12 +516,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     if (wouldCreateCycle(connection.source, connection.target, get().edges)) {
       return;
     }
+    const history = recordHistory();
     set({
       edges: addEdge(
         { ...connection, type: "mindmap", id: `e-${nanoid(8)}` },
         get().edges,
       ),
       saveStatus: "dirty",
+      ...history,
     });
   },
 
@@ -398,6 +544,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         editing: true,
       },
     };
+    const history = recordHistory();
     commitGraph(
       insertAfterId(
         nodes.map((node) => ({
@@ -419,8 +566,9 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         afterId,
       ),
     );
-    set({ lastSelectedId: id });
+    set({ lastSelectedId: id, ...history });
     awaitingMeasure.add(id);
+    labelBaseline = { id, label: DEFAULT_NODE_LABEL };
     return id;
   },
 
@@ -428,6 +576,70 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
     const parentId = getParentId(nodeId, graphNow().edges);
     if (!parentId) return get().addChildNode(nodeId);
     return get().addChildNode(parentId, undefined, nodeId);
+  },
+
+  copySelection: () => {
+    const { nodes, edges } = graphNow();
+    const selectedIds = nodes
+      .filter((node) => node.selected)
+      .map((node) => node.id);
+    const clipboard = collectNodeClipboard(selectedIds, nodes, edges);
+    if (!clipboard) return;
+    set({ clipboard });
+  },
+
+  pasteOntoSelection: (parentId) => {
+    const clipboard = get().clipboard;
+    if (!clipboard) return;
+    const { nodes, edges } = graphNow();
+    const parent = parentId
+      ? nodes.find((node) => node.id === parentId)
+      : (nodes.find((node) => node.id === get().lastSelectedId && node.selected) ??
+        nodes.find((node) => node.selected));
+    if (!parent) return;
+    if (nodes.length + clipboard.nodes.length > MAX_NODES) return;
+
+    const history = recordHistory();
+    const cloned = cloneClipboardOnto(clipboard, parent.id, () => nanoid(10));
+    const origin =
+      clipboard.nodes.find((node) => node.id === clipboard.rootIds[0])
+        ?.position ?? parent.position;
+    const pasted = cloned.nodes.map((node) => {
+      awaitingMeasure.add(node.id);
+      return {
+        id: node.id,
+        type: "mindmap" as const,
+        position: {
+          x: parent.position.x + (node.position.x - origin.x),
+          y: parent.position.y + (node.position.y - origin.y),
+        },
+        selected: cloned.rootIds.includes(node.id),
+        data: {
+          label: node.data.label,
+          color: node.data.color,
+          progress: node.data.progress,
+        },
+      };
+    });
+
+    commitGraph(
+      [
+        ...nodes.map((node) => ({
+          ...node,
+          selected: false,
+          data: { ...node.data, editing: false },
+        })),
+        ...pasted,
+      ],
+      [
+        ...edges,
+        ...cloned.edges.map((edge) => ({
+          ...edge,
+          type: "mindmap" as const,
+        })),
+      ],
+    );
+    set({ lastSelectedId: cloned.rootIds.at(-1) ?? parent.id, ...history });
   },
 
   updateNodeLabel: (id, label) => {
@@ -442,6 +654,9 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   updateNodeColor: (id, color) => {
+    const current = get().nodes.find((node) => node.id === id);
+    if (!current || current.data.color === color) return;
+    const history = recordHistory();
     set({
       nodes: get().nodes.map((node) =>
         node.id === id
@@ -449,10 +664,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           : node,
       ),
       saveStatus: "dirty",
+      ...history,
     });
   },
 
   updateNodeProgress: (id, progress) => {
+    const current = get().nodes.find((node) => node.id === id);
+    if (!current || current.data.progress === progress) return;
+    const history = recordHistory();
     set({
       nodes: get().nodes.map((node) =>
         node.id === id
@@ -460,10 +679,13 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           : node,
       ),
       saveStatus: "dirty",
+      ...history,
     });
   },
 
   startEditing: (id) => {
+    const current = get().nodes.find((node) => node.id === id);
+    labelBaseline = current ? { id, label: current.data.label } : null;
     set({
       lastSelectedId: id,
       nodes: get().nodes.map((node) => ({
@@ -475,16 +697,35 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   finishEditing: (id) => {
+    const node = get().nodes.find((item) => item.id === id);
+    const nextLabel = (node?.data.label ?? "").trim() || DEFAULT_NODE_LABEL;
+    const prevLabel =
+      labelBaseline?.id === id ? labelBaseline.label : nextLabel;
+    let history: { canUndo: boolean; canRedo: boolean } | Record<string, never> =
+      {};
+    if (prevLabel !== nextLabel && get().hydrated) {
+      const snapshot = capture();
+      snapshot.nodes = snapshot.nodes.map((item) =>
+        item.id === id
+          ? { ...item, data: { ...item.data, label: prevLabel } }
+          : item,
+      );
+      past.push(snapshot);
+      if (past.length > HISTORY_LIMIT) past.shift();
+      future = [];
+      history = { canUndo: true, canRedo: false };
+    }
+    labelBaseline = null;
     set({
-      nodes: get().nodes.map((node) => {
-        if (node.id !== id) return node;
-        const label = node.data.label.trim() || DEFAULT_NODE_LABEL;
+      nodes: get().nodes.map((item) => {
+        if (item.id !== id) return item;
         return {
-          ...node,
-          data: { ...node.data, label, editing: false },
+          ...item,
+          data: { ...item.data, label: nextLabel, editing: false },
         };
       }),
       saveStatus: "dirty",
+      ...history,
     });
   },
 
@@ -494,6 +735,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       ? nodes.filter((node) => node.id === nodeId && !node.data.isRoot)
       : nodes.filter((node) => node.selected && !node.data.isRoot);
     if (selected.length === 0) return;
+    const history = recordHistory();
     const removeIds = new Set<string>();
     for (const node of selected) {
       removeIds.add(node.id);
@@ -520,12 +762,28 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         (edge) => !removeIds.has(edge.source) && !removeIds.has(edge.target),
       ),
     );
-    set({ lastSelectedId: nextSelectedId });
+    set({ lastSelectedId: nextSelectedId, ...history });
+  },
+
+  undo: () => {
+    if (past.length === 0) return;
+    future.push(capture());
+    const entry = past.pop()!;
+    applyHistory(entry);
+  },
+
+  redo: () => {
+    if (future.length === 0) return;
+    past.push(capture());
+    const entry = future.pop()!;
+    applyHistory(entry);
   },
 
   autoLayout: async (mode, options) => {
     const fitView = options?.fitView ?? true;
-    if (mode) set({ layoutMode: mode });
+    const history = recordHistory();
+    if (mode) set({ layoutMode: mode, ...history });
+    else set(history);
     if (fitView) set({ layouting: true });
     const { nodes, edges } = graphNow();
     pending = { nodes, edges, gen: ++gen };

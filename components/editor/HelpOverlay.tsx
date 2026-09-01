@@ -68,6 +68,22 @@ export default function HelpOverlay({
             <span>Delete the subtree and re-layout</span>
           </li>
           <li>
+            <kbd>⌘ / Ctrl + C</kbd>
+            <span>Copy selected nodes and their branches</span>
+          </li>
+          <li>
+            <kbd>⌘ / Ctrl + V</kbd>
+            <span>Paste onto the selected node</span>
+          </li>
+          <li>
+            <kbd>⌘ / Ctrl + Z</kbd>
+            <span>Undo the last map change</span>
+          </li>
+          <li>
+            <kbd>⌘ / Ctrl + Shift + Z</kbd>
+            <span>Redo; Ctrl + Y on Windows</span>
+          </li>
+          <li>
             <kbd>L</kbd>
             <span>ELK layout to the right; Shift+L for radial</span>
           </li>

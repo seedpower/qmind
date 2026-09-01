@@ -1,6 +1,6 @@
 "use client";
 
-import { GitBranch, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, Copy, GitBranch, Plus, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { COLOR_ORDER, NODE_COLORS, type NodeColor } from "@/lib/types";
@@ -29,6 +29,9 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const node = useMindMapStore((s) => s.nodes.find((item) => item.id === nodeId));
   const addChildNode = useMindMapStore((s) => s.addChildNode);
   const addSiblingNode = useMindMapStore((s) => s.addSiblingNode);
+  const copySelection = useMindMapStore((s) => s.copySelection);
+  const pasteOntoSelection = useMindMapStore((s) => s.pasteOntoSelection);
+  const clipboard = useMindMapStore((s) => s.clipboard);
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
@@ -101,6 +104,34 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         <GitBranch size={14} />
         Add sibling
         <kbd>Enter</kbd>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="node-menu-item"
+        onClick={() => {
+          copySelection();
+          onClose();
+        }}
+      >
+        <Copy size={14} />
+        Copy
+        <kbd>⌘C</kbd>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="node-menu-item"
+        disabled={!clipboard}
+        title={clipboard ? undefined : "Copy nodes first"}
+        onClick={() => {
+          pasteOntoSelection(nodeId);
+          onClose();
+        }}
+      >
+        <ClipboardPaste size={14} />
+        Paste here
+        <kbd>⌘V</kbd>
       </button>
       <div className="node-menu-sep" />
       <div className="node-menu-label">Color</div>
