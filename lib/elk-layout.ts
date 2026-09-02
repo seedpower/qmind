@@ -51,6 +51,51 @@ function estimateLabelWidth(label: string, fontSize: number) {
   return width;
 }
 
+function orderForestForLayout<N extends LayoutableNode, E extends LayoutableEdge>(
+  nodes: N[],
+  edges: E[],
+): { nodes: N[]; edges: E[] } {
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const children = new Map<string, string[]>();
+  for (const edge of edges) {
+    const list = children.get(edge.source) ?? [];
+    list.push(edge.target);
+    children.set(edge.source, list);
+  }
+  const childIds = new Set(edges.map((edge) => edge.target));
+  const roots = nodes.filter((node) => !childIds.has(node.id));
+  roots.sort((a, b) => Number(Boolean(b.data.isRoot)) - Number(Boolean(a.data.isRoot)));
+
+  const orderedNodes: N[] = [];
+  const orderedEdges: E[] = [];
+  const seen = new Set<string>();
+  const edgeByPair = new Map(
+    edges.map((edge) => [`${edge.source}\0${edge.target}`, edge]),
+  );
+
+  function walk(id: string) {
+    if (seen.has(id)) return;
+    seen.add(id);
+    const node = byId.get(id);
+    if (node) orderedNodes.push(node);
+    for (const childId of children.get(id) ?? []) {
+      const edge = edgeByPair.get(`${id}\0${childId}`);
+      if (edge) orderedEdges.push(edge);
+      walk(childId);
+    }
+  }
+
+  for (const root of roots) walk(root.id);
+  for (const node of nodes) {
+    if (!seen.has(node.id)) walk(node.id);
+  }
+  for (const edge of edges) {
+    if (!orderedEdges.includes(edge)) orderedEdges.push(edge);
+  }
+
+  return { nodes: orderedNodes, edges: orderedEdges };
+}
+
 function optionsFor(mode: LayoutMode): Record<string, string> {
   if (mode === "RADIAL") {
     return {
@@ -102,12 +147,13 @@ export async function layoutWithElk<T extends LayoutableNode>(
 ): Promise<T[]> {
   if (nodes.length === 0) return nodes;
 
+  const forest = orderForestForLayout(nodes, edges);
   const sizes = new Map(nodes.map((node) => [node.id, measureNode(node)]));
 
   const graph: ElkNode = {
     id: "elk-root",
     layoutOptions: optionsFor(mode),
-    children: nodes.map((node) => {
+    children: forest.nodes.map((node) => {
       const size = sizes.get(node.id)!;
       return {
         id: node.id,
@@ -115,7 +161,7 @@ export async function layoutWithElk<T extends LayoutableNode>(
         height: size.height,
       };
     }),
-    edges: edges.map((edge) => ({
+    edges: forest.edges.map((edge) => ({
       id: edge.id,
       sources: [edge.source],
       targets: [edge.target],
