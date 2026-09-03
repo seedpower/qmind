@@ -501,18 +501,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       nodes: reordered?.nodes ?? nextNodes,
       edges: reordered?.edges ?? edges,
     };
+    const origin = dragEnded ? dragOrigin : null;
+    const dragMoved =
+      origin !== null &&
+      graphSignature(origin.nodes, origin.edges, origin.layoutMode) !==
+        graphSignature(nextGraph.nodes, nextGraph.edges, get().layoutMode);
     const history =
-      dragEnded && dragOrigin
+      dragMoved && hydrated
         ? (() => {
-            const origin = dragOrigin;
-            dragOrigin = null;
-            if (
-              !hydrated ||
-              graphSignature(origin.nodes, origin.edges, origin.layoutMode) ===
-                graphSignature(nextGraph.nodes, nextGraph.edges, get().layoutMode)
-            ) {
-              return {};
-            }
             past.push(origin);
             if (past.length > HISTORY_LIMIT) past.shift();
             future = [];
@@ -525,7 +521,10 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       nodes: nextGraph.nodes,
       edges: nextGraph.edges,
       lastSelectedId,
-      saveStatus: hydrated && (dragEnded || removed || reordered) ? "dirty" : get().saveStatus,
+      saveStatus:
+        hydrated && (dragMoved || removed || reordered)
+          ? "dirty"
+          : get().saveStatus,
       ...history,
     });
     if (reordered) {
@@ -703,6 +702,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   },
 
   updateNodeLabel: (id, label) => {
+    const current = get().nodes.find((node) => node.id === id);
+    if (!current || current.data.label === label) return;
     set({
       nodes: get().nodes.map((node) =>
         node.id === id
@@ -808,12 +809,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
 
   finishEditing: (id) => {
     const node = get().nodes.find((item) => item.id === id);
-    const nextLabel = (node?.data.label ?? "").trim() || DEFAULT_NODE_LABEL;
+    if (!node) return;
+    const nextLabel = (node.data.label ?? "").trim() || DEFAULT_NODE_LABEL;
     const prevLabel =
-      labelBaseline?.id === id ? labelBaseline.label : nextLabel;
+      labelBaseline?.id === id ? labelBaseline.label : node.data.label;
+    const labelChanged = prevLabel !== nextLabel;
     let history: { canUndo: boolean; canRedo: boolean } | Record<string, never> =
       {};
-    if (prevLabel !== nextLabel && get().hydrated) {
+    if (labelChanged && get().hydrated) {
       const snapshot = capture();
       snapshot.nodes = snapshot.nodes.map((item) =>
         item.id === id
@@ -839,7 +842,8 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           },
         };
       }),
-      saveStatus: "dirty",
+      saveStatus:
+        labelChanged && get().hydrated ? "dirty" : get().saveStatus,
       ...history,
     });
   },

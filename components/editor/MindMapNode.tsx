@@ -21,7 +21,7 @@ export default function MindMapNode({
   const liveInput = Boolean(data.editing || (selected && focused));
 
   useLayoutEffect(() => {
-    if (!liveInput) return;
+    if (!liveInput || !data.editing) return;
     const input = inputRef.current;
     if (!input) return;
     const active = document.activeElement;
@@ -106,9 +106,12 @@ export default function MindMapNode({
             }}
             onBlur={() => {
               window.setTimeout(() => {
-                if (document.activeElement !== inputRef.current) {
-                  finishEditing(id);
-                }
+                if (document.activeElement === inputRef.current) return;
+                const current = useMindMapStore
+                  .getState()
+                  .nodes.find((node) => node.id === id);
+                if (!current?.data.editing) return;
+                finishEditing(id);
               }, 0);
             }}
             onKeyDown={(event) => {

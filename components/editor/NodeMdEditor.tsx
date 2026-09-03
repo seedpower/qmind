@@ -209,7 +209,11 @@ export default function NodeMdEditor({
     >
       <MDEditor
         value={value}
-        onChange={(next) => onChange(next ?? "")}
+        onChange={(next) => {
+          const markdown = next ?? "";
+          if (markdown === valueRef.current) return;
+          onChange(markdown);
+        }}
         height={height}
         visibleDragbar={false}
         preview="live"
