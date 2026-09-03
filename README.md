@@ -27,7 +27,7 @@ Open the URL printed in the terminal (default [http://localhost:3000](http://loc
 - `Tab` adds a child, `Enter` adds a sibling, `Delete` removes a subtree
 - Toolbar **Arrange** runs [ELK.js](https://github.com/kieler/elkjs) (right / down / radial)
 - `L` arranges to the right, `Shift+L` uses radial layout
-- Edits are written to MongoDB `qmind.maps` after about a second
+- Use **Save** or `Ctrl+S` to write edits to MongoDB `qmind.maps`
 
 Each map is stored as a single document (nodes and edges nested together). The list page only projects title and node count.
 

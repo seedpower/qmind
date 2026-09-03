@@ -529,6 +529,11 @@ a {
   color: #ffb4bc;
 }
 
+.tool-btn.save-ready {
+  border-color: rgba(232, 168, 56, 0.55);
+  color: var(--gold);
+}
+
 .icon-btn {
   width: 34px;
   padding: 0;

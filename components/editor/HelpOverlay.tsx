@@ -105,7 +105,7 @@ export default function HelpOverlay({
           </li>
           <li>
             <kbd>⌘ / Ctrl + S</kbd>
-            <span>Save now</span>
+            <span>Save the map</span>
           </li>
           <li>
             <kbd>?</kbd>

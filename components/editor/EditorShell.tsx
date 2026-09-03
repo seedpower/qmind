@@ -77,16 +77,6 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const { saveStatus, hydrated } = useMindMapStore.getState();
-      if (hydrated && saveStatus === "dirty") {
-        void persist();
-      }
-    }, 900);
-    return () => clearInterval(interval);
-  }, [persist]);
-
-  useEffect(() => {
     function onKey(event: KeyboardEvent) {
       const target = event.target as HTMLElement | null;
       const nodeEditing = useMindMapStore
@@ -103,7 +93,10 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
         const key = event.key.toLowerCase();
         if (key === "s") {
           event.preventDefault();
-          void persist();
+          const { saveStatus } = useMindMapStore.getState();
+          if (saveStatus === "dirty" || saveStatus === "error") {
+            void persist();
+          }
           return;
         }
         if (typing || helpOpen) return;
@@ -207,7 +200,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
 
   return (
     <div className="editor-shell">
-      <EditorToolbar onHelp={() => setHelpOpen(true)} />
+      <EditorToolbar onHelp={() => setHelpOpen(true)} onSave={() => void persist()} />
       <EditorWorkspace canvas={<MindMapCanvas />} notes={<NodeMarkdownPane />} />
       <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>

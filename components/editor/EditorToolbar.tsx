@@ -13,6 +13,7 @@ import {
   Orbit,
   Plus,
   Redo2,
+  Save,
   Scissors,
   Trash2,
   Undo2,
@@ -24,9 +25,10 @@ import { ProgressPicker } from "./ProgressRing";
 
 type Props = {
   onHelp: () => void;
+  onSave: () => void;
 };
 
-export default function EditorToolbar({ onHelp }: Props) {
+export default function EditorToolbar({ onHelp, onSave }: Props) {
   const title = useMindMapStore((s) => s.title);
   const setTitle = useMindMapStore((s) => s.setTitle);
   const saveStatus = useMindMapStore((s) => s.saveStatus);
@@ -199,6 +201,20 @@ export default function EditorToolbar({ onHelp }: Props) {
       </div>
 
       <div className="toolbar-right">
+        <button
+          type="button"
+          className={`tool-btn${saveStatus === "dirty" || saveStatus === "error" ? " save-ready" : ""}`}
+          disabled={saveStatus !== "dirty" && saveStatus !== "error"}
+          title="Save (Ctrl+S)"
+          onClick={onSave}
+        >
+          {saveStatus === "saving" ? (
+            <LoaderCircle size={15} className="spin" />
+          ) : (
+            <Save size={15} />
+          )}
+          Save
+        </button>
         <SaveBadge status={saveStatus} count={nodes.length} />
         <button type="button" className="icon-btn" onClick={onHelp} title="Shortcuts">
           <HelpCircle size={16} />
