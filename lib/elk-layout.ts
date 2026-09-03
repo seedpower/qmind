@@ -120,6 +120,62 @@ function optionsFor(mode: LayoutMode): Record<string, string> {
   };
 }
 
+function nodeAlignment(mode: LayoutMode): Record<string, string> | undefined {
+  if (mode === "RIGHT") return { "elk.alignment": "LEFT" };
+  if (mode === "DOWN") return { "elk.alignment": "TOP" };
+  return undefined;
+}
+
+function treeDepths(nodes: { id: string }[], edges: LayoutableEdge[]) {
+  const parentOf = new Map<string, string>();
+  for (const edge of edges) parentOf.set(edge.target, edge.source);
+  const depths = new Map<string, number>();
+  const visiting = new Set<string>();
+
+  function depth(id: string): number {
+    const cached = depths.get(id);
+    if (cached != null) return cached;
+    if (visiting.has(id)) return 0;
+    const parent = parentOf.get(id);
+    if (!parent) {
+      depths.set(id, 0);
+      return 0;
+    }
+    visiting.add(id);
+    const next = depth(parent) + 1;
+    visiting.delete(id);
+    depths.set(id, next);
+    return next;
+  }
+
+  for (const node of nodes) depth(node.id);
+  return depths;
+}
+
+/** Same-depth nodes share a leading edge: left in RIGHT, top in DOWN. */
+function alignSameDepth(
+  placed: Map<string, ElkNode>,
+  depths: Map<string, number>,
+  mode: LayoutMode,
+) {
+  if (mode === "RADIAL") return;
+  const axis = mode === "DOWN" ? "y" : "x";
+  const groups = new Map<number, ElkNode[]>();
+  for (const [id, depth] of depths) {
+    const elkNode = placed.get(id);
+    if (elkNode?.[axis] == null) continue;
+    const group = groups.get(depth) ?? [];
+    group.push(elkNode);
+    groups.set(depth, group);
+  }
+  for (const group of groups.values()) {
+    if (group.length < 2) continue;
+    const shared = Math.min(...group.map((node) => node[axis] ?? Infinity));
+    if (!Number.isFinite(shared)) continue;
+    for (const node of group) node[axis] = shared;
+  }
+}
+
 function measureNode(node: LayoutableNode): { width: number; height: number } {
   const measuredWidth = node.measured?.width ?? node.width;
   const measuredHeight = node.measured?.height ?? node.height;
@@ -159,6 +215,7 @@ export async function layoutWithElk<T extends LayoutableNode>(
         id: node.id,
         width: size.width,
         height: size.height,
+        layoutOptions: nodeAlignment(mode),
       };
     }),
     edges: forest.edges.map((edge) => ({
@@ -172,6 +229,7 @@ export async function layoutWithElk<T extends LayoutableNode>(
   const placed = new Map(
     (layouted.children ?? []).map((child) => [child.id, child]),
   );
+  alignSameDepth(placed, treeDepths(forest.nodes, forest.edges), mode);
   const [ox, oy] = FLOW_NODE_ORIGIN;
 
   return nodes.map((node) => {
