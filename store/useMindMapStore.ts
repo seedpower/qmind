@@ -379,7 +379,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
 
   setTitle: (title) => set({ title, saveStatus: "dirty" }),
 
-  setViewport: (viewport) => set({ viewport, saveStatus: "dirty" }),
+  setViewport: (viewport) => set({ viewport }),
 
   markDirty: () => {
     if (get().hydrated) set({ saveStatus: "dirty" });

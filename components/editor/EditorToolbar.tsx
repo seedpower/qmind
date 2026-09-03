@@ -242,9 +242,13 @@ function SaveBadge({
         : status === "error"
           ? "Save failed"
           : "Saved";
+  const tone =
+    status === "saving" || status === "dirty" || status === "error"
+      ? status
+      : "saved";
 
   return (
-    <span className={`save-badge is-${status}`}>
+    <span className={`save-badge is-${tone}`}>
       {status === "saving" ? (
         <LoaderCircle size={13} className="spin" />
       ) : (
