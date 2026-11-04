@@ -34,8 +34,10 @@ import {
 import {
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
+  MAX_NODE_LINK,
   MAX_NODE_MARKDOWN,
   MAX_NODES,
+  normalizeNodeLink,
   type LayoutMode,
   type MindMapDocument,
   type MindMapNodeData,
@@ -88,6 +90,7 @@ function graphSignature(
       node.data.color,
       node.data.progress ?? null,
       node.data.markdown ?? "",
+      node.data.link ?? "",
     ]),
     edges: edges.map((edge) => [edge.id, edge.source, edge.target]),
   });
@@ -102,8 +105,13 @@ type MindMapState = {
   saveStatus: SaveStatus;
   hydrated: boolean;
   lastSelectedId: string | null;
+  /** Highlighted drop target while dragging nodes onto a parent. */
+  dropTargetId: string | null;
   selectionNavTick: number;
+  linkDialogTick: number;
   clipboard: NodeClipboard | null;
+  setDropTargetId: (id: string | null) => void;
+  requestLinkDialog: (nodeId?: string) => void;
   hydrate: (map: MindMapDocument) => void;
   setTitle: (title: string) => void;
   setViewport: (viewport: Viewport) => void;
@@ -126,8 +134,11 @@ type MindMapState = {
   redo: () => void;
   updateNodeLabel: (id: string, label: string) => void;
   updateNodeMarkdown: (id: string, markdown: string) => void;
+  updateNodeLink: (id: string, link: string) => void;
   updateNodeColor: (id: string, color: NodeColor) => void;
   updateNodeProgress: (id: string, progress: NodeProgress | undefined) => void;
+  /** Reparent selected forest roots onto `parentId`. Returns true if edges changed. */
+  reparentSelectionOnto: (parentId: string) => boolean;
   startEditing: (id: string, options?: { text?: string; selectAll?: boolean }) => void;
   finishEditing: (id: string) => void;
   deleteSelection: (nodeId?: string) => void;
@@ -151,6 +162,7 @@ function toFlowNodes(nodes: PersistedNode[]): FlowNode[] {
       progress: node.data.progress,
       isRoot: node.data.isRoot,
       markdown: node.data.markdown,
+      link: node.data.link,
     },
   }));
 }
@@ -342,13 +354,44 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
   saveStatus: "idle",
   hydrated: false,
   lastSelectedId: null,
+  dropTargetId: null,
   selectionNavTick: 0,
+  linkDialogTick: 0,
   clipboard: null,
   canUndo: false,
   canRedo: false,
   layouting: false,
   layoutTick: 0,
   layoutMode: "RIGHT",
+
+  setDropTargetId: (id) => {
+    if (get().dropTargetId === id) return;
+    set({ dropTargetId: id });
+  },
+
+  requestLinkDialog: (nodeId) => {
+    if (nodeId) {
+      set((state) => {
+        const current = state.nodes.find((node) => node.id === nodeId);
+        if (current?.selected) {
+          return {
+            lastSelectedId: nodeId,
+            linkDialogTick: state.linkDialogTick + 1,
+          };
+        }
+        return {
+          lastSelectedId: nodeId,
+          linkDialogTick: state.linkDialogTick + 1,
+          nodes: state.nodes.map((node) => ({
+            ...node,
+            selected: node.id === nodeId,
+          })),
+        };
+      });
+      return;
+    }
+    set((state) => ({ linkDialogTick: state.linkDialogTick + 1 }));
+  },
 
   hydrate: (map) => {
     pending = null;
@@ -367,6 +410,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       viewport: map.viewport,
       saveStatus: "saved",
       hydrated: true,
+      dropTargetId: null,
       lastSelectedId:
         nodes.find((node) => node.selected)?.id ??
         nodes.find((node) => node.data.isRoot)?.id ??
@@ -677,6 +721,7 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
           color: node.data.color,
           progress: node.data.progress,
           markdown: node.data.markdown,
+          link: node.data.link,
         },
       };
     });
@@ -732,6 +777,95 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
       ),
       saveStatus: "dirty",
     });
+  },
+
+  updateNodeLink: (id, link) => {
+    const next = normalizeNodeLink(link.slice(0, MAX_NODE_LINK));
+    const { nodes } = get();
+    const selectedIds = nodes
+      .filter((node) => node.selected)
+      .map((node) => node.id);
+    const ids =
+      selectedIds.length > 0 && selectedIds.includes(id)
+        ? selectedIds
+        : nodes.some((node) => node.id === id)
+          ? [id]
+          : [];
+    if (ids.length === 0) return;
+    const idSet = new Set(ids);
+    if (
+      nodes
+        .filter((node) => idSet.has(node.id))
+        .every((node) => (node.data.link ?? "") === (next ?? ""))
+    ) {
+      return;
+    }
+    const history = recordHistory();
+    set({
+      nodes: nodes.map((node) =>
+        idSet.has(node.id)
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                link: next,
+              },
+            }
+          : node,
+      ),
+      saveStatus: "dirty",
+      ...history,
+    });
+  },
+
+  reparentSelectionOnto: (parentId) => {
+    const { nodes, edges } = graphNow();
+    const parent = nodes.find((node) => node.id === parentId);
+    if (!parent) return false;
+
+    const selected = nodes.filter((node) => node.selected && !node.data.isRoot);
+    if (selected.length === 0) return false;
+    const selectedIds = new Set(selected.map((node) => node.id));
+    const roots = selected.filter((node) => {
+      const currentParent = getParentId(node.id, edges);
+      return !currentParent || !selectedIds.has(currentParent);
+    });
+
+    const movers = roots.filter((node) => {
+      if (node.id === parentId) return false;
+      if (getDescendantIds(node.id, edges).has(parentId)) return false;
+      if (wouldCreateCycle(parentId, node.id, edges)) return false;
+      return getParentId(node.id, edges) !== parentId;
+    });
+    if (movers.length === 0) return false;
+
+    const moverIds = new Set(movers.map((node) => node.id));
+    const history = recordHistory();
+    let nextEdges = edges.filter((edge) => !moverIds.has(edge.target));
+    for (const mover of movers) {
+      nextEdges = insertChildEdgeAfter(
+        nextEdges,
+        {
+          id: `e-${parentId}-${mover.id}`,
+          source: parentId,
+          target: mover.id,
+          type: "mindmap",
+        },
+        null,
+      );
+    }
+    // Keep drop positions; callers can Arrange / layout_map if needed.
+    pending = null;
+    gen += 1;
+    set({
+      nodes,
+      edges: nextEdges,
+      lastSelectedId: movers.at(-1)?.id ?? get().lastSelectedId,
+      dropTargetId: null,
+      saveStatus: get().hydrated ? "dirty" : get().saveStatus,
+      ...history,
+    });
+    return true;
   },
 
   updateNodeColor: (id, color) => {

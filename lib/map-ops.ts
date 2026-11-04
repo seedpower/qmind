@@ -20,7 +20,9 @@ import {
   COLOR_ORDER,
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
+  MAX_NODE_LINK,
   MAX_NODE_MARKDOWN,
+  normalizeNodeLink,
   type LayoutMode,
   type MindMapDocument,
   type NodeColor,
@@ -46,6 +48,7 @@ export type MapOutlineNode = {
   progress?: NodeProgress;
   notes: boolean;
   markdown?: string;
+  link?: string;
   children: MapOutlineNode[];
 };
 
@@ -103,6 +106,7 @@ function buildOutline(
       ...(includeNotes && node.data.markdown
         ? { markdown: node.data.markdown }
         : {}),
+      ...(node.data.link ? { link: node.data.link } : {}),
       children: (children.get(id) ?? []).flatMap((childId) => {
         const child = walk(childId, seen);
         return child ? [child] : [];
@@ -173,6 +177,7 @@ export async function getMindMapNode(mapId: string, nodeId: string) {
     isRoot: Boolean(node.data.isRoot),
     parentId: getParentId(node.id, map.edges),
     markdown: node.data.markdown ?? "",
+    link: node.data.link ?? "",
   };
 }
 
@@ -184,6 +189,7 @@ export async function addMindMapNode(input: {
   color?: NodeColor;
   progress?: NodeProgress;
   markdown?: string;
+  link?: string;
 }) {
   const map = await requireMap(input.mapId);
   const parent = input.parentId
@@ -192,6 +198,10 @@ export async function addMindMapNode(input: {
   if (input.afterId) requireNode(map, input.afterId);
   const id = nanoid(10);
   const markdown = input.markdown?.slice(0, MAX_NODE_MARKDOWN).trim();
+  const link =
+    input.link === undefined
+      ? undefined
+      : normalizeNodeLink(input.link.slice(0, MAX_NODE_LINK));
   const child: PersistedNode = {
     id,
     type: "mindmap",
@@ -201,6 +211,7 @@ export async function addMindMapNode(input: {
       color: input.color ?? DEFAULT_NODE_COLOR,
       ...(input.progress != null ? { progress: input.progress } : {}),
       ...(markdown ? { markdown } : {}),
+      ...(link ? { link } : {}),
     },
   };
   const nodes = insertAfterId(map.nodes, child, input.afterId);
@@ -236,6 +247,7 @@ export async function updateMindMapNode(input: {
   color?: NodeColor;
   progress?: NodeProgress | null;
   markdown?: string;
+  link?: string | null;
 }) {
   const map = await requireMap(input.mapId);
   requireNode(map, input.nodeId);
@@ -251,6 +263,12 @@ export async function updateMindMapNode(input: {
         : input.progress === null
           ? undefined
           : input.progress;
+    const link =
+      input.link === undefined
+        ? node.data.link
+        : input.link === null || input.link === ""
+          ? undefined
+          : normalizeNodeLink(input.link.slice(0, MAX_NODE_LINK));
     return {
       ...node,
       data: {
@@ -262,6 +280,7 @@ export async function updateMindMapNode(input: {
         ...(progress != null ? { progress } : {}),
         ...(node.data.isRoot ? { isRoot: true } : {}),
         ...(markdown ? { markdown } : {}),
+        ...(link ? { link } : {}),
       },
     };
   });
@@ -352,7 +371,7 @@ export async function searchMindMapNodes(query: string, mapId?: string) {
   for (const map of maps) {
     if (!map) continue;
     for (const node of map.nodes) {
-      const haystack = `${node.data.label}\n${node.data.markdown ?? ""}`;
+      const haystack = `${node.data.label}\n${node.data.markdown ?? ""}\n${node.data.link ?? ""}`;
       if (!haystack.toLowerCase().includes(needle.toLowerCase())) continue;
       hits.push({
         mapId: map.id,

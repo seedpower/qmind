@@ -10,7 +10,8 @@
 - 从节点右侧手柄拖到空白处创建子节点
 - 快捷键：`Tab` 添加子节点，`Enter` 添加同级，`Delete` 删除子树
 - 工具栏 **Arrange** 使用 [ELK.js](https://github.com/kieler/elkjs) 自动布局（右向 / 向下 / 径向）；`L` / `Shift+L` 快捷键
-- 节点支持颜色、进度（0–100）与 Markdown 笔记
+- 节点支持颜色、进度（0–100）、Markdown 笔记与可选链接（`Ctrl+K`）
+- 将一个或多个选中节点拖到另一节点上，可作为其子节点重新挂靠
 - 工具栏保存或 `Ctrl+S` 写入 MongoDB `qmind.maps`
 - 远程 MCP 服务位于 `/api/mcp`，可在设置中生成 API Key
 

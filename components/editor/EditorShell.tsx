@@ -7,6 +7,7 @@ import type { MindMapDocument, PersistedEdge, PersistedNode } from "@/lib/types"
 import EditorToolbar from "./EditorToolbar";
 import EditorWorkspace from "./EditorWorkspace";
 import HelpOverlay from "./HelpOverlay";
+import NodeLinkDialog from "./NodeLinkDialog";
 import NodeMarkdownPane from "./NodeMarkdownPane";
 
 const MindMapCanvas = dynamic(() => import("./MindMapCanvas"), {
@@ -25,6 +26,7 @@ function serializeNodes(nodes: ReturnType<typeof useMindMapStore.getState>["node
       progress: node.data.progress,
       isRoot: node.data.isRoot,
       ...(node.data.markdown ? { markdown: node.data.markdown } : {}),
+      ...(node.data.link ? { link: node.data.link } : {}),
     },
   }));
 }
@@ -40,12 +42,21 @@ function serializeEdges(edges: ReturnType<typeof useMindMapStore.getState>["edge
 
 export default function EditorShell({ map }: { map: MindMapDocument }) {
   const hydrate = useMindMapStore((s) => s.hydrate);
+  const linkDialogTick = useMindMapStore((s) => s.linkDialogTick);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [linkOpen, setLinkOpen] = useState(false);
   const savingRef = useRef(false);
+  const seenLinkTick = useRef(linkDialogTick);
 
   useEffect(() => {
     hydrate(map);
   }, [hydrate, map]);
+
+  useEffect(() => {
+    if (linkDialogTick === seenLinkTick.current) return;
+    seenLinkTick.current = linkDialogTick;
+    if (linkDialogTick > 0) setLinkOpen(true);
+  }, [linkDialogTick]);
 
   const persist = useCallback(async () => {
     const state = useMindMapStore.getState();
@@ -99,7 +110,15 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
           }
           return;
         }
-        if (typing || helpOpen) return;
+        if (key === "k") {
+          if (typing || helpOpen || linkOpen) return;
+          const focused = getFocusedNode(useMindMapStore.getState());
+          if (!focused) return;
+          event.preventDefault();
+          useMindMapStore.getState().requestLinkDialog();
+          return;
+        }
+        if (typing || helpOpen || linkOpen) return;
         if (key === "z") {
           event.preventDefault();
           if (event.shiftKey) {
@@ -144,7 +163,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
         return;
       }
 
-      if (typing || helpOpen) return;
+      if (typing || helpOpen || linkOpen) return;
       if (event.altKey) return;
 
       const state = useMindMapStore.getState();
@@ -186,7 +205,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [helpOpen, persist]);
+  }, [helpOpen, linkOpen, persist]);
 
   useEffect(() => {
     function onLeave(event: BeforeUnloadEvent) {
@@ -203,6 +222,7 @@ export default function EditorShell({ map }: { map: MindMapDocument }) {
       <EditorToolbar onHelp={() => setHelpOpen(true)} onSave={() => void persist()} />
       <EditorWorkspace canvas={<MindMapCanvas />} notes={<NodeMarkdownPane />} />
       <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
+      <NodeLinkDialog open={linkOpen} onClose={() => setLinkOpen(false)} />
     </div>
   );
 }

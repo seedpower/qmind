@@ -36,6 +36,8 @@ export type MindMapNodeData = {
   progress?: NodeProgress;
   isRoot?: boolean;
   markdown?: string;
+  /** Optional URL opened from the node (http(s), mailto, …). */
+  link?: string;
   editing?: boolean;
   editSelectAll?: boolean;
 };
@@ -50,6 +52,7 @@ export type PersistedNode = {
     progress?: NodeProgress;
     isRoot?: boolean;
     markdown?: string;
+    link?: string;
   };
 };
 
@@ -83,6 +86,16 @@ export type MindMapDocument = MindMapSummary & {
 export const MAX_NODES = 2000;
 /** Cap per-node notes so a map payload cannot grow without bound. */
 export const MAX_NODE_MARKDOWN = 100_000;
+/** Cap per-node hyperlink. */
+export const MAX_NODE_LINK = 2000;
+
+/** Normalize a pasted URL; empty string clears. Adds https:// when no scheme. */
+export function normalizeNodeLink(raw: string): string | undefined {
+  const trimmed = raw.trim().slice(0, MAX_NODE_LINK);
+  if (!trimmed) return undefined;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
 
 export const DEFAULT_NODE_LABEL = "New node";
 export const DEFAULT_ROOT_LABEL = "Central topic";

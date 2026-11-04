@@ -13,14 +13,76 @@ import {
   useReactFlow,
   type Connection,
   type OnConnectEnd,
+  type Node as RfNode,
 } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from "react";
 import { useShallow } from "zustand/react/shallow";
+import { getDescendantIds, wouldCreateCycle } from "@/lib/graph";
 import { FLOW_NODE_ORIGIN, getNodePalette } from "@/lib/types";
 import { getFocusedNode, useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
 import MindMapEdge from "./MindMapEdge";
 import MindMapNode from "./MindMapNode";
 import NodeContextMenu from "./NodeContextMenu";
+
+function nodeIdFromPoint(
+  clientX: number,
+  clientY: number,
+  ignoreIds?: Set<string>,
+): string | null {
+  const stack =
+    typeof document.elementsFromPoint === "function"
+      ? document.elementsFromPoint(clientX, clientY)
+      : [document.elementFromPoint(clientX, clientY)];
+  for (const el of stack) {
+    if (!(el instanceof Element)) continue;
+    const nodeEl = el.closest(".react-flow__node");
+    const id = nodeEl?.getAttribute("data-id");
+    if (!id) continue;
+    if (ignoreIds?.has(id)) continue;
+    return id;
+  }
+  return null;
+}
+
+function resolveDropParentId(
+  clientX: number,
+  clientY: number,
+  draggedId: string,
+): string | null {
+  const { nodes, edges } = useMindMapStore.getState();
+  const selected = nodes.filter((node) => node.selected && !node.data.isRoot);
+  const movingIds = new Set<string>();
+  const dragSet =
+    selected.length > 0 ? selected : nodes.filter((n) => n.id === draggedId);
+  for (const node of dragSet) {
+    if (node.data.isRoot) continue;
+    movingIds.add(node.id);
+    for (const id of getDescendantIds(node.id, edges)) movingIds.add(id);
+  }
+  movingIds.add(draggedId);
+  for (const id of getDescendantIds(draggedId, edges)) movingIds.add(id);
+
+  const under = nodeIdFromPoint(clientX, clientY, movingIds);
+  if (!under) return null;
+  const target = nodes.find((node) => node.id === under);
+  if (!target) return null;
+
+  const selectedIds = new Set(selected.map((node) => node.id));
+  const roots =
+    selected.length > 0
+      ? selected.filter((node) => {
+          const parent = edges.find((edge) => edge.target === node.id)?.source;
+          return !parent || !selectedIds.has(parent);
+        })
+      : nodes.filter((node) => node.id === draggedId && !node.data.isRoot);
+
+  if (roots.length === 0) return null;
+  for (const root of roots) {
+    if (root.id === under) return null;
+    if (wouldCreateCycle(under, root.id, edges)) return null;
+  }
+  return under;
+}
 
 const nodeTypes = { mindmap: MindMapNode };
 const edgeTypes = { mindmap: MindMapEdge };
@@ -250,6 +312,25 @@ function FlowCanvas() {
     [],
   );
 
+  const handleNodeDrag = useCallback((event: MouseEvent | TouchEvent, node: RfNode) => {
+    const point = "changedTouches" in event ? event.changedTouches[0] : event;
+    if (!point) return;
+    const parentId = resolveDropParentId(point.clientX, point.clientY, node.id);
+    useMindMapStore.getState().setDropTargetId(parentId);
+  }, []);
+
+  const handleNodeDragStop = useCallback(
+    (event: MouseEvent | TouchEvent, node: RfNode) => {
+      const point = "changedTouches" in event ? event.changedTouches[0] : event;
+      useMindMapStore.getState().setDropTargetId(null);
+      if (!point) return;
+      const parentId = resolveDropParentId(point.clientX, point.clientY, node.id);
+      if (!parentId) return;
+      useMindMapStore.getState().reparentSelectionOnto(parentId);
+    },
+    [],
+  );
+
   return (
     <div ref={hostRef} className="canvas-host">
       <ReactFlow
@@ -261,6 +342,8 @@ function FlowCanvas() {
         onConnect={handleConnect}
         onConnectStart={handleConnectStart}
         onConnectEnd={handleConnectEnd}
+        onNodeDrag={handleNodeDrag}
+        onNodeDragStop={handleNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         nodeOrigin={FLOW_NODE_ORIGIN}

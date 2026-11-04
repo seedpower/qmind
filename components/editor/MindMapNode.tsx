@@ -1,6 +1,7 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { Link2 } from "lucide-react";
 import { useLayoutEffect, useRef } from "react";
 import { DEFAULT_NODE_LABEL, getNodePalette } from "@/lib/types";
 import { useMindMapStore, type FlowNode } from "@/store/useMindMapStore";
@@ -17,8 +18,10 @@ export default function MindMapNode({
   const finishEditing = useMindMapStore((s) => s.finishEditing);
   const addChildNode = useMindMapStore((s) => s.addChildNode);
   const focused = useMindMapStore((s) => s.lastSelectedId === id);
+  const dropTarget = useMindMapStore((s) => s.dropTargetId === id);
   const { bg, border, text } = getNodePalette(data.color);
   const liveInput = Boolean(data.editing || (selected && focused));
+  const link = data.link?.trim();
 
   useLayoutEffect(() => {
     if (!liveInput || !data.editing) return;
@@ -44,7 +47,7 @@ export default function MindMapNode({
 
   return (
     <div
-      className={`mindmap-node ${data.isRoot ? "is-root" : ""} ${selected ? "is-selected" : ""} ${selected && focused ? "is-focused" : ""}`}
+      className={`mindmap-node ${data.isRoot ? "is-root" : ""} ${selected ? "is-selected" : ""} ${selected && focused ? "is-focused" : ""} ${dropTarget ? "is-drop-target" : ""}`}
       style={
         {
           "--node-bg": bg,
@@ -56,7 +59,7 @@ export default function MindMapNode({
         if (event.button !== 0) return;
         if (
           event.target instanceof HTMLElement &&
-          event.target.closest("button, input, .react-flow__handle")
+          event.target.closest("button, a, input, .react-flow__handle")
         ) {
           return;
         }
@@ -85,6 +88,20 @@ export default function MindMapNode({
       <Handle type="target" position={Position.Left} className="mindmap-handle target" />
       {data.progress != null ? (
         <ProgressRing progress={data.progress} size={data.isRoot ? 18 : 16} />
+      ) : null}
+      {link ? (
+        <a
+          className="mindmap-link nodrag nopan"
+          href={link}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={link}
+          aria-label="Open link"
+          onClick={(event) => event.stopPropagation()}
+          onPointerDown={(event) => event.stopPropagation()}
+        >
+          <Link2 size={14} aria-hidden />
+        </a>
       ) : null}
       <div className="mindmap-text">
         <span className="mindmap-sizer" aria-hidden>

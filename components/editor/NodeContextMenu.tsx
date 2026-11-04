@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardPaste, Copy, GitBranch, Plus, Scissors, Trash2 } from "lucide-react";
+import { ClipboardPaste, Copy, GitBranch, Link2, Plus, Scissors, Trash2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { COLOR_ORDER, getColorSwatch, type NodeColor } from "@/lib/types";
@@ -57,6 +57,8 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
   const deleteSelection = useMindMapStore((s) => s.deleteSelection);
   const updateNodeColor = useMindMapStore((s) => s.updateNodeColor);
   const updateNodeProgress = useMindMapStore((s) => s.updateNodeProgress);
+  const requestLinkDialog = useMindMapStore((s) => s.requestLinkDialog);
+  const hasLink = Boolean(node?.data.link);
 
   useLayoutEffect(() => {
     const el = menuRef.current;
@@ -172,6 +174,19 @@ export default function NodeContextMenu({ nodeId, x, y, onClose }: Props) {
         <ClipboardPaste size={14} />
         Paste here
         <kbd>⌘V</kbd>
+      </button>
+      <button
+        type="button"
+        role="menuitem"
+        className="node-menu-item"
+        onClick={() => {
+          requestLinkDialog(nodeId);
+          onClose();
+        }}
+      >
+        <Link2 size={14} />
+        {hasLink ? "Edit link" : "Add link"}
+        <kbd>⌘K</kbd>
       </button>
       <div className="node-menu-sep" />
       <div className="node-menu-label">

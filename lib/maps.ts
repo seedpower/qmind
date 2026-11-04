@@ -4,12 +4,14 @@ import { ObjectId, type Collection, type WithId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import {
   MAX_NODES,
+  MAX_NODE_LINK,
   MAX_NODE_MARKDOWN,
   DEFAULT_MAP_TITLE,
   DEFAULT_NODE_COLOR,
   DEFAULT_NODE_LABEL,
   DEFAULT_ROOT_LABEL,
   NODE_COLORS,
+  normalizeNodeLink,
   type MindMapDocument,
   type MindMapSummary,
   isNodeProgress,
@@ -52,6 +54,10 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
       typeof data?.markdown === "string"
         ? data.markdown.slice(0, MAX_NODE_MARKDOWN)
         : undefined;
+    const link =
+      typeof data?.link === "string"
+        ? normalizeNodeLink(data.link.slice(0, MAX_NODE_LINK))
+        : undefined;
     return [
       {
         id: node.id,
@@ -63,6 +69,7 @@ function sanitizeNodes(input: unknown): PersistedNode[] {
           progress: isNodeProgress(data?.progress) ? data.progress : undefined,
           isRoot: Boolean(data?.isRoot),
           ...(markdown ? { markdown } : {}),
+          ...(link ? { link } : {}),
         },
       },
     ];

@@ -9,6 +9,7 @@ export type NodeClipboard = {
       color: NodeColor;
       progress?: NodeProgress;
       markdown?: string;
+      link?: string;
     };
   }[];
   edges: { source: string; target: string }[];
@@ -23,6 +24,7 @@ type ClipboardSourceNode = {
     color: NodeColor;
     progress?: NodeProgress;
     markdown?: string;
+    link?: string;
   };
 };
 
@@ -64,6 +66,7 @@ export function collectNodeClipboard(
           color: node.data.color,
           progress: node.data.progress,
           markdown: node.data.markdown,
+          link: node.data.link,
         },
       })),
     edges: edges

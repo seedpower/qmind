@@ -68,6 +68,10 @@ export default function HelpOverlay({
             <span>Reorder siblings on release</span>
           </li>
           <li>
+            <kbd>Drop onto a node</kbd>
+            <span>Make the dragged selection children of that node</span>
+          </li>
+          <li>
             <kbd>↑ ↓ ← →</kbd>
             <span>Move selection among parent, child, and siblings</span>
           </li>
@@ -106,6 +110,10 @@ export default function HelpOverlay({
           <li>
             <kbd>⌘ / Ctrl + S</kbd>
             <span>Save the map</span>
+          </li>
+          <li>
+            <kbd>⌘ / Ctrl + K</kbd>
+            <span>Add or edit a link on the selected node(s)</span>
           </li>
           <li>
             <kbd>?</kbd>

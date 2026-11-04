@@ -534,6 +534,12 @@ a {
   color: var(--gold);
 }
 
+.tool-btn.primary {
+  border-color: rgba(232, 168, 56, 0.55);
+  background: color-mix(in srgb, var(--gold) 18%, var(--ink-3));
+  color: var(--gold);
+}
+
 .icon-btn {
   width: 34px;
   padding: 0;
@@ -957,6 +963,32 @@ html.editor-resizing-stacked * {
     0 12px 28px rgba(0, 0, 0, 0.25);
 }
 
+.mindmap-node.is-drop-target {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, #e8a838 75%, transparent),
+    0 12px 28px rgba(0, 0, 0, 0.28);
+  outline: 2px dashed #e8a838;
+  outline-offset: 3px;
+}
+
+.mindmap-link {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  margin-left: -2px;
+  border-radius: 999px;
+  color: var(--node-text);
+  opacity: 0.72;
+  text-decoration: none;
+}
+
+.mindmap-link:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--node-border) 22%, transparent);
+}
+
 .mindmap-text {
   display: inline-grid;
   align-items: center;
@@ -1173,6 +1205,91 @@ html.editor-resizing-stacked * {
   margin: 0;
   padding: 0;
   border: 0;
+}
+
+.link-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 10, 14, 0.62);
+}
+
+.link-dialog {
+  width: min(420px, 100%);
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--ink-2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.link-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.link-dialog-header h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.link-dialog-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--paper-dim);
+  cursor: pointer;
+}
+
+.link-dialog-close:hover {
+  border-color: var(--line);
+  color: var(--paper);
+}
+
+.link-dialog-hint {
+  margin: 0 0 12px;
+  color: var(--paper-dim);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.link-dialog-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--ink-3);
+  color: var(--paper);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.link-dialog-input:focus {
+  border-color: rgba(232, 168, 56, 0.55);
+}
+
+.link-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 @media (max-width: 900px) {

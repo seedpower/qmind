@@ -19,6 +19,7 @@ import {
 } from "@/lib/map-ops";
 import {
   COLOR_ORDER,
+  MAX_NODE_LINK,
   MAX_NODE_MARKDOWN,
   type NodeColor,
 } from "@/lib/types";
@@ -173,9 +174,23 @@ const handler = createMcpHandler(
             .optional()
             .describe("0, 25, 50, 75, or 100"),
           markdown: z.string().max(MAX_NODE_MARKDOWN).optional(),
+          link: z
+            .string()
+            .max(MAX_NODE_LINK)
+            .optional()
+            .describe("Optional URL for the node"),
         }),
       },
-      async ({ map_id, parent_id, after_id, label, color, progress, markdown }) =>
+      async ({
+        map_id,
+        parent_id,
+        after_id,
+        label,
+        color,
+        progress,
+        markdown,
+        link,
+      }) =>
         run(() =>
           addMindMapNode({
             mapId: map_id,
@@ -185,6 +200,7 @@ const handler = createMcpHandler(
             color: color as NodeColor | undefined,
             progress,
             markdown,
+            link,
           }),
         ),
     );
@@ -194,7 +210,7 @@ const handler = createMcpHandler(
       {
         title: "Update node",
         description:
-          "Update a node's label, color, progress, or markdown notes. Pass progress null or markdown \"\" to clear.",
+          "Update a node's label, color, progress, markdown notes, or link. Pass progress null, markdown \"\", or link \"\" to clear.",
         inputSchema: z.object({
           map_id: z.string().min(1),
           node_id: z.string().min(1),
@@ -202,9 +218,15 @@ const handler = createMcpHandler(
           color: nodeColorSchema.optional(),
           progress: progressSchema.nullable().optional(),
           markdown: z.string().max(MAX_NODE_MARKDOWN).optional(),
+          link: z
+            .string()
+            .max(MAX_NODE_LINK)
+            .nullable()
+            .optional()
+            .describe("URL for the node; pass \"\" or null to clear"),
         }),
       },
-      async ({ map_id, node_id, label, color, progress, markdown }) =>
+      async ({ map_id, node_id, label, color, progress, markdown, link }) =>
         run(() =>
           updateMindMapNode({
             mapId: map_id,
@@ -213,6 +235,7 @@ const handler = createMcpHandler(
             color: color as NodeColor | undefined,
             progress,
             markdown,
+            link,
           }),
         ),
     );
