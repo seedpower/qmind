@@ -69,7 +69,7 @@ export default function HelpOverlay({
           </li>
           <li>
             <kbd>Drop onto a node</kbd>
-            <span>Make the dragged selection children of that node</span>
+            <span>Make the dragged selection children of that node, then auto-layout</span>
           </li>
           <li>
             <kbd>↑ ↓ ← →</kbd>

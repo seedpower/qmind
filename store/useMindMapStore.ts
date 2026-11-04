@@ -854,16 +854,14 @@ export const useMindMapStore = create<MindMapState>((set, get) => {
         null,
       );
     }
-    // Keep drop positions; callers can Arrange / layout_map if needed.
-    pending = null;
-    gen += 1;
+    commitGraph(nodes, nextEdges);
     set({
-      nodes,
-      edges: nextEdges,
       lastSelectedId: movers.at(-1)?.id ?? get().lastSelectedId,
       dropTargetId: null,
-      saveStatus: get().hydrated ? "dirty" : get().saveStatus,
       ...history,
+    });
+    void flushPendingLayout().then(() => {
+      set({ layoutTick: get().layoutTick + 1 });
     });
     return true;
   },

@@ -11,7 +11,7 @@ A mind-map workspace built with Next.js, MongoDB, and [xyflow](https://reactflow
 - Keyboard: `Tab` adds a child, `Enter` adds a sibling, `Delete` removes a subtree
 - Toolbar **Arrange** runs [ELK.js](https://github.com/kieler/elkjs) (right / down / radial); `L` / `Shift+L` shortcuts
 - Per-node color, progress (0–100), Markdown notes, and optional links (`Ctrl+K`)
-- Drag one or more selected nodes onto another node to reparent them as children
+- Drag one or more selected nodes onto another node to reparent them as children, then auto-layout
 - Save with the toolbar button or `Ctrl+S` (writes to MongoDB `qmind.maps`)
 - Remote MCP server at `/api/mcp` with API keys generated in Settings
 
